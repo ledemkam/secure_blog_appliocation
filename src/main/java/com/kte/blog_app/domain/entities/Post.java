@@ -32,7 +32,7 @@ public class Post {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private PostCategory category;
+    private PostStatus category;
 
 
     @Column(nullable = false, updatable = false)
