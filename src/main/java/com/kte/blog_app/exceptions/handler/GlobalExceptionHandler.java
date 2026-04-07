@@ -1,6 +1,7 @@
 package com.kte.blog_app.exceptions.handler;
 
 import com.kte.blog_app.domain.dto.ErrorDto;
+import com.kte.blog_app.exceptions.UserAlreadyExistsException;
 import com.kte.blog_app.exceptions.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,14 @@ import java.util.List;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ErrorDto> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        log.error("Caught UserAlreadyExistsException", ex);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("User already exist");
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
