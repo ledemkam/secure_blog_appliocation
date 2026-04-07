@@ -5,6 +5,28 @@ spring:
     default: dev
   config:
     import: optional:file:.env[.properties]
+  main:
+    allow-bean-definition-overriding: true
+
+  # Configuration de base de données H2
+  datasource:
+    url: jdbc:h2:mem:blogforumdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+
+# Configuration JWT
+jwt:
+  secret: 0CZcmhqwwEuQ7hHljzDgVcne8ddW9Yd/6rqH/kS52z8=
+  expiration: 86400000  # 24 heures en millisecondes
+
 
 # Logging
 logging:
@@ -27,6 +49,3 @@ management:
 info:
   app:
     name: ${spring.application.name}
-
-
-
