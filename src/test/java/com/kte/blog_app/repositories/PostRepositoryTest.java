@@ -8,7 +8,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.TestPropertySource;
@@ -41,17 +40,21 @@ class PostRepositoryTest {
     private Post old_brochures;
     private Post new_post;
 
+    private User  author1;
+    private User  author2;
+
+
     @BeforeEach
     void setUp() {
         // create valid user
-        User author1 = User.builder()
+        author1 = User.builder()
                 .email("author1@example.com")
                 .password("password1230")
                 .name("Author_One")
                 .createDate(LocalDateTime.now())
                 .build();
 
-        User author2 = User.builder()
+         author2 = User.builder()
                 .email("author2@example.com")
                 .password("password1230")
                 .name("Author_Two")
@@ -100,8 +103,18 @@ class PostRepositoryTest {
         assertThat(posts.get(0).getTitle()).isEqualTo("old brochures");
     }
 
-    //@Test
-   // void should_find_posts_by_author_and_Status() {
-    //}
+    @Test
+    @DisplayName("should find all posts by author and category")
+    void should_find_posts_by_author_and_Category() {
+        //when
+
+        List<Post> posts = postRepository.findAllByAuthorAndCategory(author2,PostStatus.PUBLISHED);
+
+
+        //Then
+        assertThat(posts).hasSize(1);
+        assertThat(posts.get(0).getCategory()).isEqualTo(PostStatus.PUBLISHED);
+        assertThat(posts.get(0).getTitle()).isEqualTo("today_news");
+    }
 
 }
