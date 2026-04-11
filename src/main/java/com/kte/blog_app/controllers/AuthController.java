@@ -3,6 +3,7 @@ package com.kte.blog_app.controllers;
 import com.kte.blog_app.domain.dto.request.LoginRequest;
 import com.kte.blog_app.domain.dto.request.RegisterRequest;
 import com.kte.blog_app.domain.dto.response.AuthResponse;
+import com.kte.blog_app.exceptions.UserAlreadyExistsException;
 import com.kte.blog_app.services.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +36,7 @@ public class AuthController {
                     .build();
 
             return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
-        } catch (IllegalArgumentException e) {
+        } catch (UserAlreadyExistsException e) {
             // User already exists
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         } catch (Exception e) {
