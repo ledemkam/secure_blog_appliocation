@@ -10,6 +10,7 @@ import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.repositories.PostRepository;
 
+import com.kte.blog_app.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class PostServiceImplTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private PostMapper postMapper;
@@ -227,9 +231,9 @@ class PostServiceImplTest {
         List<PostResponse> result = postService.getAllPostByCategory(category);
 
         // Then
-        assertNotNull(result, "Le résultat ne devrait pas être null");
-        assertFalse(result.isEmpty(), "La liste ne devrait pas être vide");
-        assertEquals(2, result.size(), "La liste devrait contenir 2 posts");
+        assertNotNull(result, "The result should not be null");
+        assertFalse(result.isEmpty(), "The list should not be empty");
+        assertEquals(2, result.size(), "The list should contain 2 posts");
 
         // Vérify first post
         PostResponse firstResult = result.get(0);
@@ -250,6 +254,45 @@ class PostServiceImplTest {
         verify(postMapper, times(1)).toResponse(savedPost);
         verify(postMapper, times(1)).toResponse(secondPost);
         verifyNoMoreInteractions(postRepository, postMapper);
+    }
+
+    @Test
+    @DisplayName("should return all posts by author and  category when posts exist")
+    void should_return_posts_by_author_and_category_when_posts_exist(){
+        // Given
+        PostStatus category = PostStatus.DRAFT;
+        when(postRepository.findAllByAuthorAndCategory(author,category)).thenReturn(postsByCategory);
+        when(postMapper.toResponse(savedPost)).thenReturn(expectedPostResponse);
+        when(postMapper.toResponse(secondPost)).thenReturn(secondPostResponse);
+
+        // When
+        List<PostResponse> result = postService.getAllPostByAuthorAndCategory(author,category);
+
+        // Then
+        assertNotNull(result, "The result should not be null");
+        assertFalse(result.isEmpty(), "The list should not be empty");
+        assertEquals(2, result.size(), "The list should contain 2 posts");
+
+        // Vérify first post
+        PostResponse firstResult = result.get(0);
+        assertEquals(expectedPostResponse.getId(), firstResult.getId());
+        assertEquals(expectedPostResponse.getTitle(), firstResult.getTitle());
+        assertEquals(expectedPostResponse.getContent(), firstResult.getContent());
+        assertEquals(expectedPostResponse.getCategory(), firstResult.getCategory());
+
+        // Vérify second post
+        PostResponse secondResult = result.get(1);
+        assertEquals(secondPostResponse.getId(), secondResult.getId());
+        assertEquals(secondPostResponse.getTitle(), secondResult.getTitle());
+        assertEquals(secondPostResponse.getContent(), secondResult.getContent());
+        assertEquals(secondPostResponse.getCategory(), secondResult.getCategory());
+
+        // Vérify interactions with mocks
+        verify(postRepository, times(1)).findAllByAuthorAndCategory(author,category);
+        verify(postMapper, times(1)).toResponse(savedPost);
+        verify(postMapper, times(1)).toResponse(secondPost);
+        verifyNoMoreInteractions(postRepository, postMapper);
+
     }
 
 }
