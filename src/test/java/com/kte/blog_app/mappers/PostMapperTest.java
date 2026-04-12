@@ -7,7 +7,6 @@ import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.PostStatus;
 import com.kte.blog_app.domain.entities.User;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
