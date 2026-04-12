@@ -1,8 +1,10 @@
 package com.kte.blog_app.services.impl;
 
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
+import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.repositories.PostRepository;
 import com.kte.blog_app.services.PostService;
@@ -33,5 +35,15 @@ public class PostServiceImpl implements PostService {
         log.info("created post with id: {}", createdPost.getId());
         return createdPost;
     }
+
+    @Override
+    public PostResponse getPostById(Long id) {
+        log.debug("getting post by id : {}", id);
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
+        return postMapper.toResponse(post);
+    }
+
 }
 
