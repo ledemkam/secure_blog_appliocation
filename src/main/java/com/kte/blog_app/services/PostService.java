@@ -14,4 +14,5 @@ public interface PostService {
     Post createPost(User user, CreatePostRequest createPostRequest);
     PostResponse getPostById(Long id);
     List<PostResponse> getAllPostByCategory(PostStatus category);
+    List<PostResponse> getAllPostByAuthorAndCategory(User author , PostStatus category);
 }
