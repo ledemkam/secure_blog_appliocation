@@ -57,7 +57,14 @@ public class PostServiceImpl implements PostService {
                 .toList();
     }
 
-
+    @Override
+    public List<PostResponse> getAllPostByAuthorAndCategory(User author, PostStatus category) {
+        log.debug("getting posts by author and category : {}", author.getName(),category);
+        List<Post> posts = postRepository.findAllByAuthorAndCategory(author, category);
+        return posts.stream()
+                .map(postMapper::toResponse)
+                .toList();
+    }
 
 
 
