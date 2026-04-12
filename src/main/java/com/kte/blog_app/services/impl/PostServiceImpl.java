@@ -3,6 +3,7 @@ package com.kte.blog_app.services.impl;
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
 import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
+import com.kte.blog_app.domain.entities.PostStatus;
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,6 +46,20 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
         return postMapper.toResponse(post);
     }
+
+    @Override
+    public List<PostResponse> getAllPostByCategory(PostStatus category) {
+        log.debug("getting posts by category : {}", category);
+
+        List<Post> posts = postRepository.findAllByCategory(category);
+        return posts.stream()
+                .map(postMapper::toResponse)
+                .toList();
+    }
+
+
+
+
 
 }
 
