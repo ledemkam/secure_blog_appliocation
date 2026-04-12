@@ -1,9 +1,12 @@
 package com.kte.blog_app.services.impl;
 
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
+import com.kte.blog_app.domain.dto.response.AuthorResponse;
+import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.PostStatus;
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.repositories.PostRepository;
 
@@ -17,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +44,9 @@ class PostServiceImplTest {
     private CreatePostRequest createPostRequest;
     private Post mappedPost;
     private Post savedPost;
+    private PostResponse expectedPostResponse;
+    private AuthorResponse authorResponse;
+
 
     @BeforeEach
     void setUp() {
@@ -74,6 +81,23 @@ class PostServiceImplTest {
                 .updateDate(LocalDateTime.now())
                 .build();
 
+
+        authorResponse = AuthorResponse.builder()
+                .id(author.getId())
+                .name(author.getName())
+
+                .build();
+
+        expectedPostResponse = PostResponse.builder()
+                .id(savedPost.getId())
+                .title(savedPost.getTitle())
+                .content(savedPost.getContent())
+                .category(savedPost.getCategory())
+                .author(authorResponse)
+                .createDate(savedPost.getCreateDate())
+                .updateDate(savedPost.getUpdateDate())
+                .build();
+
     }
 
     @Test
@@ -106,6 +130,55 @@ class PostServiceImplTest {
                         post.getCategory().equals(createPostRequest.getCategory())
         ));
     }
+
+    @Test
+    @DisplayName("should return post by id when post exists")
+    void should_return_post_by_id_when_post_exist() {
+        // Given
+        Long postId = 1L;
+        when(postRepository.findById(postId)).thenReturn(Optional.of(savedPost));
+        when(postMapper.toResponse(savedPost)).thenReturn(expectedPostResponse);
+
+        // When
+        PostResponse result = postService.getPostById(postId);
+
+        // Then
+        assertNotNull(result, "The result should not be null");
+        assertEquals(expectedPostResponse.getId(), result.getId());
+        assertEquals(expectedPostResponse.getTitle(), result.getTitle());
+        assertEquals(expectedPostResponse.getContent(), result.getContent());
+        assertEquals(expectedPostResponse.getCategory(), result.getCategory());
+        assertEquals(expectedPostResponse.getAuthor().getId(), result.getAuthor().getId());
+        assertEquals(expectedPostResponse.getAuthor().getName(), result.getAuthor().getName());
+
+        // Vérify all mocks method
+        verify(postRepository, times(1)).findById(postId);
+        verify(postMapper, times(1)).toResponse(savedPost);
+        verifyNoMoreInteractions(postRepository, postMapper);
+    }
+
+    @Test
+    @DisplayName("should throw PostNotFoundException when post does not exist")
+    void should_throw_exception_when_post_not_found() {
+        // Given
+        Long nonExistentPostId = 999L;
+        when(postRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
+
+        // When & Then
+        PostNotFoundException exception = assertThrows(
+                PostNotFoundException.class,
+                () -> postService.getPostById(nonExistentPostId),
+                "A PostNotFoundException should be thrown when the post does not exist."
+        );
+
+        assertEquals("Post not found with id: " + nonExistentPostId, exception.getMessage());
+
+        // Vérifications des interactions
+        verify(postRepository, times(1)).findById(nonExistentPostId);
+        verify(postMapper, never()).toResponse(any(Post.class));
+        verifyNoMoreInteractions(postRepository, postMapper);
+    }
+
 
 
 }
