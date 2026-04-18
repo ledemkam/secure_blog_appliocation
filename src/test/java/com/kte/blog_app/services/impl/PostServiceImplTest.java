@@ -1,6 +1,7 @@
 package com.kte.blog_app.services.impl;
 
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
+import com.kte.blog_app.domain.dto.request.UpdatePostRequest;
 import com.kte.blog_app.domain.dto.response.AuthorResponse;
 import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
@@ -10,7 +11,8 @@ import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.repositories.PostRepository;
 
-import com.kte.blog_app.repositories.UserRepository;
+import com.kte.blog_app.security.PostSecurityService;
+import com.kte.blog_app.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,10 +39,13 @@ class PostServiceImplTest {
     private PostRepository postRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private PostMapper postMapper;
 
     @Mock
-    private PostMapper postMapper;
+    private PostSecurityService postSecurityService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private PostServiceImpl postService;
@@ -57,7 +62,11 @@ class PostServiceImplTest {
     private Post secondPost;
     private PostResponse secondPostResponse;
     private List<Post> postsByCategory;
-    private List<PostResponse> expectedPostResponses;
+
+    private UpdatePostRequest updatePostRequest;
+    private Post existingPostForUpdate;
+    private Post updatedPost;
+    private PostResponse updatedPostResponse;
 
 
 
@@ -133,7 +142,46 @@ class PostServiceImplTest {
                     .build();
 
         postsByCategory = Arrays.asList(savedPost, secondPost);
-        expectedPostResponses = Arrays.asList(expectedPostResponse, secondPostResponse);
+
+
+        updatePostRequest = UpdatePostRequest.builder()
+                .id(1L)
+                .title("Updated Title")
+                .content("Updated content for the blog post")
+                .category(PostStatus.PUBLISHED)
+                .build();
+
+        // Post existant avant mise à jour
+        existingPostForUpdate = Post.builder()
+                .id(1L)
+                .title("Original Title")
+                .content("Original content")
+                .category(PostStatus.DRAFT)
+                .author(author)
+                .createDate(LocalDateTime.now())
+                .updateDate(LocalDateTime.now())
+                .build();
+
+        // Post après mise à jour
+        updatedPost = Post.builder()
+                .id(1L)
+                .title(updatePostRequest.getTitle())
+                .content(updatePostRequest.getContent())
+                .category(updatePostRequest.getCategory())
+                .author(author)
+                .createDate(existingPostForUpdate.getCreateDate())
+                .updateDate(LocalDateTime.now())
+                .build();
+
+        updatedPostResponse = PostResponse.builder()
+                .id(updatedPost.getId())
+                .title(updatedPost.getTitle())
+                .content(updatedPost.getContent())
+                .category(updatedPost.getCategory())
+                .author(authorResponse)
+                .createDate(updatedPost.getCreateDate())
+                .updateDate(updatedPost.getUpdateDate())
+                .build();
 
 
 
@@ -295,4 +343,50 @@ class PostServiceImplTest {
 
     }
 
+    @Test
+    @DisplayName("should update post when post exists")
+    void should_update_post_when_post_exist(){
+        // Given - configuration des mocks
+        Long postId = 1L;
+
+        // Configuration des mocks - S'assurer que getCurrentAuthenticatedUser retourne toujours l'author
+        when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(author);
+        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPostForUpdate));
+        doNothing().when(postSecurityService).validatePostModificationRights(existingPostForUpdate, author);
+        doNothing().when(postMapper).updateEntity(updatePostRequest, existingPostForUpdate);
+        when(postRepository.save(existingPostForUpdate)).thenReturn(updatedPost);
+        when(postMapper.toResponse(updatedPost)).thenReturn(updatedPostResponse);
+
+        // When - exécution de la méthode à tester
+        PostResponse result = postService.updatePost(postId, updatePostRequest);
+
+        // Then - vérifications
+        assertNotNull(result, "The result should not be null");
+        assertEquals(updatedPostResponse.getId(), result.getId());
+        assertEquals(updatedPostResponse.getTitle(), result.getTitle());
+        assertEquals(updatedPostResponse.getContent(), result.getContent());
+        assertEquals(updatedPostResponse.getCategory(), result.getCategory());
+        assertEquals(updatedPostResponse.getAuthor().getId(), result.getAuthor().getId());
+        assertEquals(updatedPostResponse.getAuthor().getName(), result.getAuthor().getName());
+
+        // Vérifications des interactions avec les mocks
+        verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
+        verify(postRepository, times(1)).findById(postId);
+        verify(postSecurityService, times(1)).validatePostModificationRights(existingPostForUpdate, author);
+        verify(postMapper, times(1)).updateEntity(updatePostRequest, existingPostForUpdate);
+        verify(postRepository, times(1)).save(existingPostForUpdate);
+        verify(postMapper, times(1)).toResponse(updatedPost);
+        verifyNoMoreInteractions(postRepository, postMapper, postSecurityService);
+    }
+
+    @Test
+    @DisplayName("should delete post when post exist")
+    void should_delete_post_when_post_exist(){}
+
+
 }
+
+
+
+
+
