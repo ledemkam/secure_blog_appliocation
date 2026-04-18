@@ -31,9 +31,13 @@ jwt:
 # Logging
 logging:
   level:
-    root: info
+    root: INFO
+    com.kte.blog_app: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
   pattern:
-    console: '%d{yyyy-MM-dd HH:mm:ss}- %msg%n'
+    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+
 
 management:
   endpoints:

@@ -29,3 +29,18 @@ management:
     health:
       show-details: never
 
+# Configuration de logging pour la production
+logging:
+  level:
+    root: WARN
+    com.kte.blog_app: INFO
+    org.springframework: WARN
+    org.hibernate: WARN
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+    file: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'
+  file:
+    name: logs/blog-app.log
+    max-size: 10MB
+    max-history: 30
+

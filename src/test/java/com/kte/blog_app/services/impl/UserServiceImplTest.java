@@ -61,7 +61,7 @@ class UserServiceImplTest {
         //When and Then
         assertThatThrownBy(()-> userService.getUserId(userId))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining("User not found with  id: " + userId);
+                .hasMessageContaining("User not found with id: " + userId);
     }
 
 

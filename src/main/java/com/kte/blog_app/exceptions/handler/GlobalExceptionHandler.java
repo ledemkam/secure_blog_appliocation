@@ -1,6 +1,7 @@
 package com.kte.blog_app.exceptions.handler;
 
 import com.kte.blog_app.domain.dto.ErrorDto;
+import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.exceptions.UserAlreadyExistsException;
 import com.kte.blog_app.exceptions.UserNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -32,6 +33,14 @@ public class GlobalExceptionHandler {
         log.error("Caught UserNotFoundException", ex);
         ErrorDto errorDto = new ErrorDto();
         errorDto.setError("User not found");
+        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ErrorDto> handlePostNotFoundException(PostNotFoundException ex) {
+        log.error("Caught PostNotFoundException", ex);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("Post not found");
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
     }
 
