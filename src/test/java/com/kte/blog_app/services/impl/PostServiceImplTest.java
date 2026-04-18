@@ -381,7 +381,52 @@ class PostServiceImplTest {
 
     @Test
     @DisplayName("should delete post when post exist")
-    void should_delete_post_when_post_exist(){}
+    void should_delete_post_when_post_exist(){
+        // Given - configuration des mocks
+        Long postId = 1L;
+
+        // Configuration des mocks pour la suppression
+        when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(author);
+        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPostForUpdate));
+        doNothing().when(postSecurityService).validatePostModificationRights(existingPostForUpdate, author);
+        doNothing().when(postRepository).deleteById(postId);
+
+        // When - exécution de la méthode à tester
+        // Pas d'exception attendue, la méthode devrait s'exécuter sans problème
+        assertDoesNotThrow(() -> postService.deletePost(postId));
+
+        // Then - vérifications des interactions avec les mocks
+        verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
+        verify(postRepository, times(1)).findById(postId);
+        verify(postSecurityService, times(1)).validatePostModificationRights(existingPostForUpdate, author);
+        verify(postRepository, times(1)).deleteById(postId);
+        verifyNoMoreInteractions(postRepository, postSecurityService);
+    }
+
+    @Test
+    @DisplayName("should throw PostNotFoundException when trying to delete non-existing post")
+    void should_throw_exception_when_deleting_non_existing_post() {
+        // Given
+        Long nonExistentPostId = 999L;
+        when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(author);
+        when(postRepository.findById(nonExistentPostId)).thenReturn(Optional.empty());
+
+        // When & Then
+        PostNotFoundException exception = assertThrows(
+                PostNotFoundException.class,
+                () -> postService.deletePost(nonExistentPostId),
+                "A PostNotFoundException should be thrown when trying to delete a non-existing post."
+        );
+
+        assertEquals("Post not found with id: " + nonExistentPostId, exception.getMessage());
+
+        // Vérifications des interactions
+        verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
+        verify(postRepository, times(1)).findById(nonExistentPostId);
+        verify(postSecurityService, never()).validatePostModificationRights(any(Post.class), any(User.class));
+        verify(postRepository, never()).deleteById(any(Long.class));
+        verifyNoMoreInteractions(postRepository, postSecurityService);
+    }
 
 
 }
