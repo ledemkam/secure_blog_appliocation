@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -52,7 +53,7 @@ public interface IpostController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    List<PostResponse> getAllPostByCategory(PostStatus category);
+    ResponseEntity <List<PostResponse>> getAllPostByCategory(PostStatus category);
 
     @Operation(summary = "Get All Posts by Author and Category")
     @ApiResponses(value = {
@@ -60,6 +61,23 @@ public interface IpostController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    List<PostResponse> getAllPostByAuthorAndCategory(User author, PostStatus category);
+    ResponseEntity<List<PostResponse>> getAllPostByAuthorAndCategory(
+            @RequestParam Long authorId,
+            @RequestParam PostStatus category);
+
+    @Operation(summary = "Update Post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+    })
+    ResponseEntity<PostResponse> updatePost(Long id, UpdatePostRequest updatePostRequest);
 }
+
 
