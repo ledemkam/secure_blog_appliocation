@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: blog_app_test
+  profiles:
+    active: test
+  main:
+    allow-bean-definition-overriding: true
+
+  # Configuration de base de données H2 pour les tests
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  h2:
+    console:
+      enabled: false
+
+# Configuration JWT pour les tests (secret fixe pour les tests)
+jwt:
+  secret: dGVzdF9qd3Rfc2VjcmV0X2Zvcl90ZXN0aW5nX3B1cnBvc2VzX29ubHk=
+  expiration: 86400000  # 24 heures en millisecondes
+
+# Logging minimaliste pour les tests
+logging:
+  level:
+    root: WARN
+    com.kte.blog_app: INFO
+    org.hibernate.SQL: ERROR
+    org.hibernate.type.descriptor.sql.BasicBinder: ERROR
+
+# Désactiver les actuators pour les tests
+management:
+  endpoints:
+    enabled-by-default: false
