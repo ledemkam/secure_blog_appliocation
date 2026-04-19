@@ -1,6 +1,7 @@
 package com.kte.blog_app.services.impl;
 
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.UserAlreadyExistsException;
 import com.kte.blog_app.repositories.UserRepository;
 import com.kte.blog_app.security.BlogUserDetails;
 import com.kte.blog_app.services.AuthenticationService;
@@ -11,6 +12,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -40,10 +42,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public UserDetails authenticate(String email, String password) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
-        return userDetailsService.loadUserByUsername(email);
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, password)
+            );
+            return userDetailsService.loadUserByUsername(email);
+        } catch (Exception e) {
+            throw new BadCredentialsException("Invalid credentials");
+        }
     }
 
     @Override
@@ -75,7 +81,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public UserDetails register(String name, String email, String password) {  // ← Signature corrigée
         // Vérifier si l'utilisateur existe déjà
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("User with email " + email + " already exists");
+            throw new UserAlreadyExistsException("User with email " + email + " already exists");
         }
 
         // Créer nouvel utilisateur
