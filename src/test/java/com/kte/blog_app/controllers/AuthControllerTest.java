@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -145,7 +146,7 @@ class AuthControllerTest {
                 .build();
 
         when(authenticationService.authenticate(any(), any()))
-                .thenThrow(new RuntimeException("Invalid credentials"));
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         // When & Then
         mockMvc.perform(post("/api/v1/auth/login")

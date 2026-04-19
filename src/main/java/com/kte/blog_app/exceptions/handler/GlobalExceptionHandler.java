@@ -50,7 +50,7 @@ public class GlobalExceptionHandler {
             log.error("Caught UserAlreadyExistsException", ex);
             ErrorDto errorDto = new ErrorDto();
             errorDto.setError("User already exist");
-            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(errorDto, HttpStatus.CONFLICT);
         }
 
         @ExceptionHandler(UserNotFoundException.class)
