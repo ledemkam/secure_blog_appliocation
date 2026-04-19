@@ -8,6 +8,10 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,31 +24,50 @@ import java.util.List;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<ErrorDto> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
-        log.error("Caught UserAlreadyExistsException", ex);
-        ErrorDto errorDto = new ErrorDto();
-        errorDto.setError("User already exist");
-        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
-    }
+        @ExceptionHandler({
+                AuthenticationException.class,
+                BadCredentialsException.class,
+                UsernameNotFoundException.class
+        })
+        public ResponseEntity<ErrorDto> handleAuthenticationException(Exception ex) {
+            log.warn("Authentication failed: {}", ex.getMessage()); // log.warn, pas log.error
+            ErrorDto errorDto = new ErrorDto();
+            errorDto.setError("Invalid credentials"); // Message générique pour la sécurité
+            return new ResponseEntity<>(errorDto, HttpStatus.UNAUTHORIZED);
+        }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
-        log.error("Caught UserNotFoundException", ex);
-        ErrorDto errorDto = new ErrorDto();
-        errorDto.setError("User not found");
-        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(PostNotFoundException.class)
-    public ResponseEntity<ErrorDto> handlePostNotFoundException(PostNotFoundException ex) {
-        log.error("Caught PostNotFoundException", ex);
-        ErrorDto errorDto = new ErrorDto();
-        errorDto.setError("Post not found");
-        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
-    }
+        @ExceptionHandler(AccessDeniedException.class)
+        public ResponseEntity<ErrorDto> handleAccessDenied(AccessDeniedException ex) {
+            log.warn("Access denied: {}", ex.getMessage());
+            ErrorDto errorDto = new ErrorDto();
+            errorDto.setError("Access denied");
+            return new ResponseEntity<>(errorDto, HttpStatus.FORBIDDEN);
+        }
 
 
+        @ExceptionHandler(UserAlreadyExistsException.class)
+        public ResponseEntity<ErrorDto> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+            log.error("Caught UserAlreadyExistsException", ex);
+            ErrorDto errorDto = new ErrorDto();
+            errorDto.setError("User already exist");
+            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+        }
+
+        @ExceptionHandler(UserNotFoundException.class)
+        public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
+            log.error("Caught UserNotFoundException", ex);
+            ErrorDto errorDto = new ErrorDto();
+            errorDto.setError("User not found");
+            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+        }
+
+        @ExceptionHandler(PostNotFoundException.class)
+        public ResponseEntity<ErrorDto> handlePostNotFoundException(PostNotFoundException ex) {
+            log.error("Caught PostNotFoundException", ex);
+            ErrorDto errorDto = new ErrorDto();
+            errorDto.setError("Post not found");
+            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+        }
 
 
 
