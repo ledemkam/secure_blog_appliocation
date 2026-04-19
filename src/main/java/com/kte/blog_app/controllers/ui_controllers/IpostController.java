@@ -32,6 +32,34 @@ public interface IpostController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    ResponseEntity<Post> createPost(@Valid @RequestBody CreatePostRequest createPostRequest);
+    ResponseEntity<PostResponse> createPost(@Valid @RequestBody CreatePostRequest createPostRequest);
+
+    @Operation(summary = "Get Post By Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+    })
+    ResponseEntity<PostResponse> getPostById(Long id);
+
+    @Operation(summary = "Get All Posts by Category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+    })
+    List<PostResponse> getAllPostByCategory(PostStatus category);
+
+    @Operation(summary = "Get All Posts by Author and Category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+    })
+    List<PostResponse> getAllPostByAuthorAndCategory(User author, PostStatus category);
 }
 
