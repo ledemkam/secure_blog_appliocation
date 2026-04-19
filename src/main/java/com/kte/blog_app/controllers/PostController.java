@@ -123,5 +123,24 @@ public class PostController implements IpostController {
         return ResponseEntity.ok(updatedPostResponse);
     }
 
+    @Override
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@postSecurityService.canDeletePost(#id)")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        log.info("Received request to delete post with ID: {}", id);
+
+        User currentUser = postSecurityService.getCurrentAuthenticatedUser();
+        log.debug("Authenticated user: '{}' (ID: {}) is attempting to delete post with ID: {}",
+                currentUser.getName(), currentUser.getId(), id);
+
+        postService.deletePost(id);
+
+        log.info("Successfully deleted post with ID: {} by user: '{}' (ID: {})",
+                id, currentUser.getName(), currentUser.getId());
+
+        return ResponseEntity.noContent().build();
+    }
+
+
 }
 
