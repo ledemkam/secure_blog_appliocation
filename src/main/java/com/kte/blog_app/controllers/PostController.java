@@ -2,8 +2,10 @@ package com.kte.blog_app.controllers;
 
 import com.kte.blog_app.controllers.ui_controllers.IpostController;
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
+import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.security.PostSecurityService;
 import com.kte.blog_app.services.PostService;
 import jakarta.validation.Valid;
@@ -22,15 +24,41 @@ public class PostController implements IpostController {
 
     private final PostService postService;
     private final PostSecurityService postSecurityService;
+    private final PostMapper postMapper;
 
     @Override
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Post> createPost(@Valid @RequestBody CreatePostRequest createPostRequest) {
+    public ResponseEntity<PostResponse> createPost(@Valid @RequestBody CreatePostRequest createPostRequest) {
+        log.info("Received request to create post with title: '{}'", createPostRequest.getTitle());
+
         User currentUser = postSecurityService.getCurrentAuthenticatedUser();
+        log.debug("Authenticated user: '{}' (ID: {}) is creating a post",
+                currentUser.getName(), currentUser.getId());
+
         Post createdPost = postService.createPost(currentUser, createPostRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdPost);
+        PostResponse createdPostResponse = postMapper.toResponse(createdPost);
+
+        log.info("Successfully created post with ID: {} and title: '{}' for user: '{}' (ID: {})",
+                createdPost.getId(),
+                createdPost.getTitle(),
+                currentUser.getName(),
+                currentUser.getId());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdPostResponse);
     }
 
-}
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<PostResponse> getPostById(@PathVariable Long id) {
+        log.info("Received request to get post with ID: {}", id);
 
+        PostResponse postResponse = postService.getPostById(id);
+
+        log.debug("Successfully retrieved post with ID: {} and title: '{}'", id, postResponse.getTitle());
+
+        return ResponseEntity.ok(postResponse);
+    }
+
+
+}
