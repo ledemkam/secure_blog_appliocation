@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
             log.error("Caught PostNotFoundException", ex);
             ErrorDto errorDto = new ErrorDto();
             errorDto.setError("Post not found");
-            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
         }
 
 

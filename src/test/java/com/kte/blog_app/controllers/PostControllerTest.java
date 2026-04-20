@@ -7,6 +7,7 @@ import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.PostStatus;
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.security.PostSecurityService;
 import com.kte.blog_app.services.PostService;
@@ -208,5 +209,25 @@ class PostControllerTest {
 
         // Vérifications
         verify(postService, times(1)).getPostById(postId);
+    }
+
+    @Test
+    void Should_Return_404_Post_When_Post_no_found() throws Exception {
+        // Given - Post ID qui n'existe pas
+        Long nonExistentPostId = 999L;
+
+        // Mock service pour lancer une exception
+        when(postService.getPostById(nonExistentPostId))
+                .thenThrow(new PostNotFoundException("Post with id " + nonExistentPostId + " not found"));
+
+        // When & Then - Test execution
+        mockMvc.perform(get("/api/v1/posts/{id}", nonExistentPostId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", ""))
+                .andExpect(status().isNotFound()) // ← Changer de isNotFound() à isBadRequest()
+                .andExpect(jsonPath("$.error").value("Post not found")); // Vérifier le message d'erreur
+
+        // Vérifications
+        verify(postService, times(1)).getPostById(nonExistentPostId);
     }
 }
