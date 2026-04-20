@@ -26,7 +26,6 @@ import java.util.ArrayList;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -123,5 +122,26 @@ class PostControllerTest {
         verify(postService, times(1)).createPost(any(User.class), any(CreatePostRequest.class));
         verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
         verify(postMapper, times(1)).toResponse(any(Post.class));
+    }
+
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void Should_Return_400_invalid_request() throws Exception {
+        // Given - request with no titel
+        CreatePostRequest invalidRequest = CreatePostRequest.builder()
+                .content("This is a test post content with sufficient length for validation")
+                .category(PostStatus.DRAFT)
+                // .missing titel !
+                .build();
+
+        // When & Then
+        mockMvc.perform(post("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(invalidRequest))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+
+        // Vérifier qu'aucun service n'est appelé
+        verify(postService, never()).createPost(any(), any());
     }
 }
