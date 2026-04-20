@@ -14,6 +14,7 @@ import com.kte.blog_app.services.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -26,11 +27,14 @@ import java.util.ArrayList;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
 @WebMvcTest(PostController.class)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@WithMockUser // Ajoutez cette ligne pour simuler un utilisateur connecté par défaut
 class PostControllerTest {
 
     @Autowired
@@ -143,5 +147,66 @@ class PostControllerTest {
 
         // Vérifier qu'aucun service n'est appelé
         verify(postService, never()).createPost(any(), any());
+    }
+
+    // Unauthenticated user
+    @Test
+    void Should_Return_401_When_User_Not_Authenticated() throws Exception {
+        // Given
+        CreatePostRequest validRequest = CreatePostRequest.builder()
+                .title("Valid Title")
+                .content("This is a valid content with sufficient length")
+                .category(PostStatus.DRAFT)
+                .build();
+
+        // When & Then - without @WithMockUser
+        mockMvc.perform(post("/api/v1/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest))
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        verify(postService, never()).createPost(any(), any());
+    }
+
+    // --- GET by ID --
+    @Test
+    void Should_Return_200_Post_When_Post_exists() throws Exception {
+        // Given - Post ID qui existe
+        Long postId = 1L;
+
+        // Mock PostResponse
+        AuthorResponse authorResponse = AuthorResponse.builder()
+                .id(1L)
+                .name("Test Author")
+                .build();
+
+        PostResponse expectedResponse = PostResponse.builder()
+                .id(postId)
+                .title("Existing Post Title")
+                .content("This is an existing post content")
+                .category(PostStatus.PUBLISHED)
+                .author(authorResponse)
+                .createDate(LocalDateTime.now())
+                .updateDate(LocalDateTime.now())
+                .build();
+
+        // Mock service
+        when(postService.getPostById(postId)).thenReturn(expectedResponse);
+
+        // When & Then - Test execution
+        mockMvc.perform(get("/api/v1/posts/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "")) // Header vide pour éviter la session
+                .andExpect(status().isOk()) // Vérifier status 200
+                .andExpect(jsonPath("$.id").value(postId))
+                .andExpect(jsonPath("$.title").value("Existing Post Title"))
+                .andExpect(jsonPath("$.content").value("This is an existing post content"))
+                .andExpect(jsonPath("$.category").value("PUBLISHED"))
+                .andExpect(jsonPath("$.author.id").value(1L))
+                .andExpect(jsonPath("$.author.name").value("Test Author"));
+
+        // Vérifications
+        verify(postService, times(1)).getPostById(postId);
     }
 }
