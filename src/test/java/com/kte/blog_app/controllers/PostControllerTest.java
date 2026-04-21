@@ -234,7 +234,7 @@ class PostControllerTest {
 
     // --- GET by All Post By Category ---
     @Test
-    void Should_Return_200_Post_When_Post_byCategory_exists() throws Exception {
+    void Should_Return_200_Post_When_Posts_by_Category_exists() throws Exception {
         // Given - Catégorie existante avec des posts
         PostStatus category = PostStatus.PUBLISHED;
 
@@ -295,5 +295,18 @@ class PostControllerTest {
 
         // Vérifications
         verify(postService, times(1)).getAllPostByCategory(category);
+    }
+
+    @Test
+    void Should_Return_500_When_Posts_Invalid_Category_Parameter() throws Exception{
+        // When & Then - Test with invalid parameter
+        mockMvc.perform(get("/api/v1/posts/category")
+                        .param("category", "INVALID_CATEGORY")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", ""))
+                .andExpect(status().isInternalServerError()); // 500 for invalid parameter
+
+        // Check that no service is being called
+        verify(postService, never()).getAllPostByCategory(any());
     }
 }

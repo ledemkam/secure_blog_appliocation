@@ -49,7 +49,7 @@ public interface IpostController {
     @Operation(summary = "Get All Posts by Category")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "404", description = "Not Found",
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
     ResponseEntity <List<PostResponse>> getAllPostByCategory(PostStatus category);
@@ -57,7 +57,7 @@ public interface IpostController {
     @Operation(summary = "Get All Posts by Author and Category")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "404", description = "Not Found",
+            @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
     ResponseEntity<List<PostResponse>> getAllPostByAuthorAndCategory(
