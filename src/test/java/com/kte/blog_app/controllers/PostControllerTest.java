@@ -25,6 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -229,5 +230,70 @@ class PostControllerTest {
 
         // Vérifications
         verify(postService, times(1)).getPostById(nonExistentPostId);
+    }
+
+    // --- GET by All Post By Category ---
+    @Test
+    void Should_Return_200_Post_When_Post_byCategory_exists() throws Exception {
+        // Given - Catégorie existante avec des posts
+        PostStatus category = PostStatus.PUBLISHED;
+
+        // Mock AuthorResponse
+        AuthorResponse authorResponse1 = AuthorResponse.builder()
+                .id(1L)
+                .name("Test Author 1")
+                .build();
+
+        AuthorResponse authorResponse2 = AuthorResponse.builder()
+                .id(2L)
+                .name("Test Author 2")
+                .build();
+
+        // Mock liste de PostResponse pour la catégorie
+        List<PostResponse> expectedPosts = List.of(
+                PostResponse.builder()
+                        .id(1L)
+                        .title("First Published Post")
+                        .content("Content of first published post")
+                        .category(PostStatus.PUBLISHED)
+                        .author(authorResponse1)
+                        .createDate(LocalDateTime.now().minusDays(2))
+                        .updateDate(LocalDateTime.now().minusDays(1))
+                        .build(),
+                PostResponse.builder()
+                        .id(2L)
+                        .title("Second Published Post")
+                        .content("Content of second published post")
+                        .category(PostStatus.PUBLISHED)
+                        .author(authorResponse2)
+                        .createDate(LocalDateTime.now().minusDays(1))
+                        .updateDate(LocalDateTime.now())
+                        .build()
+        );
+
+        // Mock service
+        when(postService.getAllPostByCategory(category)).thenReturn(expectedPosts);
+
+        // When & Then - Test execution
+        mockMvc.perform(get("/api/v1/posts/category")
+                        .param("category", category.name())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("First Published Post"))
+                .andExpect(jsonPath("$[0].category").value("PUBLISHED"))
+                .andExpect(jsonPath("$[0].author.id").value(1L))
+                .andExpect(jsonPath("$[0].author.name").value("Test Author 1"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].title").value("Second Published Post"))
+                .andExpect(jsonPath("$[1].category").value("PUBLISHED"))
+                .andExpect(jsonPath("$[1].author.id").value(2L))
+                .andExpect(jsonPath("$[1].author.name").value("Test Author 2"));
+
+        // Vérifications
+        verify(postService, times(1)).getAllPostByCategory(category);
     }
 }
