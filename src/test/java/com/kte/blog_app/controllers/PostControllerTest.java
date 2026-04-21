@@ -18,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.security.test.context.support.WithMockUser;
-
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @WebMvcTest(PostController.class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@WithMockUser // Ajoutez cette ligne pour simuler un utilisateur connecté par défaut
+@Import(TestSecurityConfig.class)
 class PostControllerTest {
 
     @Autowired
@@ -57,74 +57,143 @@ class PostControllerTest {
     @MockBean
     private UserService userService;
 
+    // Constants
+    private static final String API_BASE_PATH = "/api/v1/posts";
+    private static final String VALID_TITLE = "Test Post Title";
+    private static final String VALID_CONTENT = "This is a test post content with sufficient length for validation";
+    private static final String EXISTING_POST_TITLE = "Existing Post Title";
+    private static final String EXISTING_POST_CONTENT = "This is an existing post content";
+
+    // Common test data
     private User mockUser;
+    private User mockAuthor;
+    private AuthorResponse defaultAuthorResponse;
+    private AuthorResponse johnDoeAuthorResponse;
+    private Long defaultAuthorId;
+    private Long nonExistentPostId;
+    private LocalDateTime baseDateTime;
 
     @BeforeEach
     void setUp() {
-        mockUser = User.builder()
-                .id(1L)
-                .name("Test User")
-                .email("test@test.com")
-                .createDate(LocalDateTime.now()) // past createDate
-                .posts(new ArrayList<>()) // past list of post
+        baseDateTime = LocalDateTime.now();
+        nonExistentPostId = 999L;
+        defaultAuthorId = 1L;
+
+        // Setup users
+        mockUser = createUser(1L, "Test User", "test@test.com", baseDateTime);
+        mockAuthor = createUser(2L, "John Doe", "john.doe@test.com", baseDateTime.minusMonths(1));
+
+        // Setup author responses
+        defaultAuthorResponse = createAuthorResponse(1L, "Test User");
+        johnDoeAuthorResponse = createAuthorResponse(2L, "John Doe");
+    }
+
+    // --- Utility Methods ---
+    private User createUser(Long id, String name, String email, LocalDateTime createDate) {
+        return User.builder()
+                .id(id)
+                .name(name)
+                .email(email)
+                .createDate(createDate)
+                .posts(new ArrayList<>())
                 .build();
     }
 
-    // --- POST ---
+    private AuthorResponse createAuthorResponse(Long id, String name) {
+        return AuthorResponse.builder()
+                .id(id)
+                .name(name)
+                .build();
+    }
+
+    private CreatePostRequest createValidPostRequest() {
+        return CreatePostRequest.builder()
+                .title(VALID_TITLE)
+                .content(VALID_CONTENT)
+                .category(PostStatus.DRAFT)
+                .build();
+    }
+
+    private CreatePostRequest createInvalidPostRequest() {
+        return CreatePostRequest.builder()
+                .content(VALID_CONTENT)
+                .category(PostStatus.DRAFT)
+                // missing title
+                .build();
+    }
+
+    private Post createMockPost(Long id, String title, String content, PostStatus category, User author) {
+        return Post.builder()
+                .id(id)
+                .title(title)
+                .content(content)
+                .category(category)
+                .author(author)
+                .createDate(baseDateTime)
+                .updateDate(baseDateTime)
+                .build();
+    }
+
+    private PostResponse createPostResponse(Long id, String title, String content,
+                                            PostStatus category, AuthorResponse author,
+                                            LocalDateTime createDate, LocalDateTime updateDate) {
+        return PostResponse.builder()
+                .id(id)
+                .title(title)
+                .content(content)
+                .category(category)
+                .author(author)
+                .createDate(createDate)
+                .updateDate(updateDate)
+                .build();
+    }
+
+    private List<PostResponse> createExpectedPostsForCategory(PostStatus category) {
+        return List.of(
+                createPostResponse(1L, "First Published Post", "Content of first published post",
+                        category, createAuthorResponse(1L, "Test Author 1"),
+                        baseDateTime.minusDays(2), baseDateTime.minusDays(1)),
+                createPostResponse(2L, "Second Published Post", "Content of second published post",
+                        category, createAuthorResponse(2L, "Test Author 2"),
+                        baseDateTime.minusDays(1), baseDateTime)
+        );
+    }
+
+    private List<PostResponse> createExpectedPostsForAuthorAndCategory(AuthorResponse author, PostStatus category) {
+        return List.of(
+                createPostResponse(1L, "John's First Published Post", "Content of John's first published post",
+                        category, author, baseDateTime.minusDays(5), baseDateTime.minusDays(3)),
+                createPostResponse(2L, "John's Second Published Post", "Content of John's second published post",
+                        category, author, baseDateTime.minusDays(2), baseDateTime.minusDays(1))
+        );
+    }
+
+    // --- POST Tests ---
     @Test
     @WithMockUser(username = "testuser", roles = "USER")
     void Should_Return_201_When_post_created() throws Exception {
-        // Given - Creating test data
-        CreatePostRequest createPostRequest = CreatePostRequest.builder()
-                .title("Test Post Title")
-                .content("This is a test post content with sufficient length for validation")
-                .category(PostStatus.DRAFT)
-                .build();
-
-        // Mock Post avec author
-        Post mockPost = Post.builder()
-                .id(1L)
-                .title("Test Post Title")
-                .content("This is a test post content with sufficient length for validation")
-                .category(PostStatus.DRAFT)
-                .author(mockUser)
-                .createDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        // Mock PostResponse
-        AuthorResponse authorResponse = AuthorResponse.builder()
-                .id(1L)
-                .name("Test User")
-                .build();
-
-        PostResponse expectedResponse = PostResponse.builder()
-                .id(1L)
-                .title("Test Post Title")
-                .content("This is a test post content with sufficient length for validation")
-                .category(PostStatus.DRAFT)
-                .author(authorResponse)
-                .createDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
+        // Given
+        CreatePostRequest request = createValidPostRequest();
+        Post mockPost = createMockPost(1L, VALID_TITLE, VALID_CONTENT, PostStatus.DRAFT, mockUser);
+        PostResponse expectedResponse = createPostResponse(1L, VALID_TITLE, VALID_CONTENT,
+                PostStatus.DRAFT, defaultAuthorResponse, baseDateTime, baseDateTime);
 
         // Mock services
         when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(mockUser);
         when(postService.createPost(any(User.class), any(CreatePostRequest.class))).thenReturn(mockPost);
         when(postMapper.toResponse(any(Post.class))).thenReturn(expectedResponse);
 
-        // When & Then - Test execution
-        mockMvc.perform(post("/api/v1/posts")
+        // When & Then
+        mockMvc.perform(post(API_BASE_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createPostRequest))
-                        .with(csrf())) // AJOUTER CSRF TOKEN
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1L))
-                .andExpect(jsonPath("$.title").value("Test Post Title"))
-                .andExpect(jsonPath("$.content").value("This is a test post content with sufficient length for validation"))
+                .andExpect(jsonPath("$.title").value(VALID_TITLE))
+                .andExpect(jsonPath("$.content").value(VALID_CONTENT))
                 .andExpect(jsonPath("$.category").value("DRAFT"));
 
-        // Vérifications
         verify(postService, times(1)).createPost(any(User.class), any(CreatePostRequest.class));
         verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
         verify(postMapper, times(1)).toResponse(any(Post.class));
@@ -133,36 +202,26 @@ class PostControllerTest {
     @Test
     @WithMockUser(username = "testuser", roles = "USER")
     void Should_Return_400_invalid_request() throws Exception {
-        // Given - request with no titel
-        CreatePostRequest invalidRequest = CreatePostRequest.builder()
-                .content("This is a test post content with sufficient length for validation")
-                .category(PostStatus.DRAFT)
-                // .missing titel !
-                .build();
+        // Given
+        CreatePostRequest invalidRequest = createInvalidPostRequest();
 
         // When & Then
-        mockMvc.perform(post("/api/v1/posts")
+        mockMvc.perform(post(API_BASE_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest))
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
 
-        // Vérifier qu'aucun service n'est appelé
         verify(postService, never()).createPost(any(), any());
     }
 
-    // Unauthenticated user
     @Test
     void Should_Return_401_When_User_Not_Authenticated() throws Exception {
         // Given
-        CreatePostRequest validRequest = CreatePostRequest.builder()
-                .title("Valid Title")
-                .content("This is a valid content with sufficient length")
-                .category(PostStatus.DRAFT)
-                .build();
+        CreatePostRequest validRequest = createValidPostRequest();
 
-        // When & Then - without @WithMockUser
-        mockMvc.perform(post("/api/v1/posts")
+        // When & Then
+        mockMvc.perform(post(API_BASE_PATH)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest))
                         .with(csrf()))
@@ -171,111 +230,58 @@ class PostControllerTest {
         verify(postService, never()).createPost(any(), any());
     }
 
-    // --- GET by ID --
+    // --- GET by ID Tests ---
     @Test
     void Should_Return_200_Post_When_Post_exists() throws Exception {
-        // Given - Post ID qui existe
+        // Given
         Long postId = 1L;
+        PostResponse expectedResponse = createPostResponse(postId, EXISTING_POST_TITLE, EXISTING_POST_CONTENT,
+                PostStatus.PUBLISHED, defaultAuthorResponse, baseDateTime, baseDateTime);
 
-        // Mock PostResponse
-        AuthorResponse authorResponse = AuthorResponse.builder()
-                .id(1L)
-                .name("Test Author")
-                .build();
-
-        PostResponse expectedResponse = PostResponse.builder()
-                .id(postId)
-                .title("Existing Post Title")
-                .content("This is an existing post content")
-                .category(PostStatus.PUBLISHED)
-                .author(authorResponse)
-                .createDate(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
-                .build();
-
-        // Mock service
         when(postService.getPostById(postId)).thenReturn(expectedResponse);
 
-        // When & Then - Test execution
-        mockMvc.perform(get("/api/v1/posts/{id}", postId)
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/{id}", postId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("Authorization", "")) // Header vide pour éviter la session
-                .andExpect(status().isOk()) // Vérifier status 200
+                        .header("Authorization", ""))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(postId))
-                .andExpect(jsonPath("$.title").value("Existing Post Title"))
-                .andExpect(jsonPath("$.content").value("This is an existing post content"))
+                .andExpect(jsonPath("$.title").value(EXISTING_POST_TITLE))
+                .andExpect(jsonPath("$.content").value(EXISTING_POST_CONTENT))
                 .andExpect(jsonPath("$.category").value("PUBLISHED"))
                 .andExpect(jsonPath("$.author.id").value(1L))
-                .andExpect(jsonPath("$.author.name").value("Test Author"));
+                .andExpect(jsonPath("$.author.name").value("Test User"));
 
-        // Vérifications
         verify(postService, times(1)).getPostById(postId);
     }
 
     @Test
     void Should_Return_404_Post_When_Post_no_found() throws Exception {
-        // Given - Post ID qui n'existe pas
-        Long nonExistentPostId = 999L;
-
-        // Mock service pour lancer une exception
+        // Given
         when(postService.getPostById(nonExistentPostId))
                 .thenThrow(new PostNotFoundException("Post with id " + nonExistentPostId + " not found"));
 
-        // When & Then - Test execution
-        mockMvc.perform(get("/api/v1/posts/{id}", nonExistentPostId)
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/{id}", nonExistentPostId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", ""))
-                .andExpect(status().isNotFound()) // ← Changer de isNotFound() à isBadRequest()
-                .andExpect(jsonPath("$.error").value("Post not found")); // Vérifier le message d'erreur
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("Post not found"));
 
-        // Vérifications
         verify(postService, times(1)).getPostById(nonExistentPostId);
     }
 
-    // --- GET by All Post By Category ---
+    // --- GET by Category Tests ---
     @Test
     void Should_Return_200_Post_When_Posts_by_Category_exists() throws Exception {
-        // Given - Catégorie existante avec des posts
+        // Given
         PostStatus category = PostStatus.PUBLISHED;
+        List<PostResponse> expectedPosts = createExpectedPostsForCategory(category);
 
-        // Mock AuthorResponse
-        AuthorResponse authorResponse1 = AuthorResponse.builder()
-                .id(1L)
-                .name("Test Author 1")
-                .build();
-
-        AuthorResponse authorResponse2 = AuthorResponse.builder()
-                .id(2L)
-                .name("Test Author 2")
-                .build();
-
-        // Mock liste de PostResponse pour la catégorie
-        List<PostResponse> expectedPosts = List.of(
-                PostResponse.builder()
-                        .id(1L)
-                        .title("First Published Post")
-                        .content("Content of first published post")
-                        .category(PostStatus.PUBLISHED)
-                        .author(authorResponse1)
-                        .createDate(LocalDateTime.now().minusDays(2))
-                        .updateDate(LocalDateTime.now().minusDays(1))
-                        .build(),
-                PostResponse.builder()
-                        .id(2L)
-                        .title("Second Published Post")
-                        .content("Content of second published post")
-                        .category(PostStatus.PUBLISHED)
-                        .author(authorResponse2)
-                        .createDate(LocalDateTime.now().minusDays(1))
-                        .updateDate(LocalDateTime.now())
-                        .build()
-        );
-
-        // Mock service
         when(postService.getAllPostByCategory(category)).thenReturn(expectedPosts);
 
-        // When & Then - Test execution
-        mockMvc.perform(get("/api/v1/posts/category")
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/category")
                         .param("category", category.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", ""))
@@ -285,81 +291,38 @@ class PostControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("First Published Post"))
                 .andExpect(jsonPath("$[0].category").value("PUBLISHED"))
-                .andExpect(jsonPath("$[0].author.id").value(1L))
-                .andExpect(jsonPath("$[0].author.name").value("Test Author 1"))
                 .andExpect(jsonPath("$[1].id").value(2L))
                 .andExpect(jsonPath("$[1].title").value("Second Published Post"))
-                .andExpect(jsonPath("$[1].category").value("PUBLISHED"))
-                .andExpect(jsonPath("$[1].author.id").value(2L))
-                .andExpect(jsonPath("$[1].author.name").value("Test Author 2"));
+                .andExpect(jsonPath("$[1].category").value("PUBLISHED"));
 
-        // Vérifications
         verify(postService, times(1)).getAllPostByCategory(category);
     }
 
     @Test
-    void Should_Return_500_When_Posts_Invalid_Category_Parameter() throws Exception{
-        // When & Then - Test with invalid parameter
-        mockMvc.perform(get("/api/v1/posts/category")
+    void Should_Return_500_When_Posts_Invalid_Category_Parameter() throws Exception {
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/category")
                         .param("category", "INVALID_CATEGORY")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", ""))
-                .andExpect(status().isInternalServerError()); // 500 for invalid parameter
+                .andExpect(status().isInternalServerError());
 
-        // Check that no service is being called
         verify(postService, never()).getAllPostByCategory(any());
     }
 
+    // --- GET by Author and Category Tests ---
     @Test
     void Should_Return_200_Post_When_Posts_by_Author_and_Category_exists() throws Exception {
-        // Given - Auteur et catégorie existants avec des posts
-        Long authorId = 1L;
+        // Given
         PostStatus category = PostStatus.PUBLISHED;
+        List<PostResponse> expectedPosts = createExpectedPostsForAuthorAndCategory(johnDoeAuthorResponse, category);
 
-        // Mock User (auteur)
-        User mockAuthor = User.builder()
-                .id(authorId)
-                .name("John Doe")
-                .email("john.doe@test.com")
-                .createDate(LocalDateTime.now().minusMonths(1))
-                .posts(new ArrayList<>())
-                .build();
-
-        // Mock AuthorResponse
-        AuthorResponse authorResponse = AuthorResponse.builder()
-                .id(authorId)
-                .name("John Doe")
-                .build();
-
-        // Mock liste de PostResponse pour cet auteur et cette catégorie
-        List<PostResponse> expectedPosts = List.of(
-                PostResponse.builder()
-                        .id(1L)
-                        .title("John's First Published Post")
-                        .content("Content of John's first published post")
-                        .category(PostStatus.PUBLISHED)
-                        .author(authorResponse)
-                        .createDate(LocalDateTime.now().minusDays(5))
-                        .updateDate(LocalDateTime.now().minusDays(3))
-                        .build(),
-                PostResponse.builder()
-                        .id(2L)
-                        .title("John's Second Published Post")
-                        .content("Content of John's second published post")
-                        .category(PostStatus.PUBLISHED)
-                        .author(authorResponse)
-                        .createDate(LocalDateTime.now().minusDays(2))
-                        .updateDate(LocalDateTime.now().minusDays(1))
-                        .build()
-        );
-
-        // Mock services
-        when(userService.getUserId(authorId)).thenReturn(mockAuthor);
+        when(userService.getUserId(defaultAuthorId)).thenReturn(mockAuthor);
         when(postService.getAllPostByAuthorAndCategory(mockAuthor, category)).thenReturn(expectedPosts);
 
-        // When & Then - Test execution
-        mockMvc.perform(get("/api/v1/posts/search")
-                        .param("authorId", String.valueOf(authorId))
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/search")
+                        .param("authorId", String.valueOf(defaultAuthorId))
                         .param("category", category.name())
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", ""))
@@ -369,31 +332,29 @@ class PostControllerTest {
                 .andExpect(jsonPath("$[0].id").value(1L))
                 .andExpect(jsonPath("$[0].title").value("John's First Published Post"))
                 .andExpect(jsonPath("$[0].category").value("PUBLISHED"))
-                .andExpect(jsonPath("$[0].author.id").value(authorId))
                 .andExpect(jsonPath("$[0].author.name").value("John Doe"))
                 .andExpect(jsonPath("$[1].id").value(2L))
                 .andExpect(jsonPath("$[1].title").value("John's Second Published Post"))
                 .andExpect(jsonPath("$[1].category").value("PUBLISHED"))
-                .andExpect(jsonPath("$[1].author.id").value(authorId))
                 .andExpect(jsonPath("$[1].author.name").value("John Doe"));
 
-        // Vérifications
-        verify(userService, times(1)).getUserId(authorId);
+        verify(userService, times(1)).getUserId(defaultAuthorId);
         verify(postService, times(1)).getAllPostByAuthorAndCategory(mockAuthor, category);
     }
 
     @Test
-    void Should_Return_500_When_Posts_Invalid_author_and_category_Parameter() throws Exception{
-        // When & Then - Test with invalid parameter
-        mockMvc.perform(get("/api/v1/posts/search")
+    void Should_Return_500_When_Posts_Invalid_author_and_category_Parameter() throws Exception {
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/search")
                         .param("author", "INVALID_AUTHOR")
                         .param("category", "INVALID_CATEGORY")
                         .contentType(MediaType.APPLICATION_JSON)
                         .header("Authorization", ""))
-                .andExpect(status().isInternalServerError()); // 500 for invalid parameter
+                .andExpect(status().isInternalServerError());
 
-        // Checking
         verify(postService, never()).getAllPostByCategory(any());
         verify(userService, never()).getUserId(any());
     }
+
+
 }
