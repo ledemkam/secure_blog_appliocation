@@ -2,6 +2,7 @@ package com.kte.blog_app.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
+import com.kte.blog_app.domain.dto.request.UpdatePostRequest;
 import com.kte.blog_app.domain.dto.response.AuthorResponse;
 import com.kte.blog_app.domain.dto.response.PostResponse;
 import com.kte.blog_app.domain.entities.Post;
@@ -29,8 +30,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 
@@ -354,6 +354,51 @@ class PostControllerTest {
 
         verify(postService, never()).getAllPostByCategory(any());
         verify(userService, never()).getUserId(any());
+    }
+
+    // --- PUT ---
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void should_return_200_when_post_updated() throws Exception {
+        // Given
+        Long postId = 1L;
+        UpdatePostRequest updateRequest = UpdatePostRequest.builder()
+                .id(postId)
+                .title("Updated Post Title")
+                .content("This is an updated post content with sufficient length for validation")
+                .category(PostStatus.PUBLISHED)
+                .build();
+
+        PostResponse expectedResponse = createPostResponse(
+                postId,
+                "Updated Post Title",
+                "This is an updated post content with sufficient length for validation",
+                PostStatus.PUBLISHED,
+                defaultAuthorResponse,
+                baseDateTime,
+                baseDateTime.plusMinutes(5) // updateDate différente
+        );
+
+        // Mock services
+        when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(mockUser);
+        when(postService.updatePost(postId, updateRequest)).thenReturn(expectedResponse);
+
+        // When & Then
+        mockMvc.perform(put(API_BASE_PATH + "/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(postId))
+                .andExpect(jsonPath("$.title").value("Updated Post Title"))
+                .andExpect(jsonPath("$.content").value("This is an updated post content with sufficient length for validation"))
+                .andExpect(jsonPath("$.category").value("PUBLISHED"))
+                .andExpect(jsonPath("$.author.id").value(1L))
+                .andExpect(jsonPath("$.author.name").value("Test User"));
+
+        // Verify interactions
+        verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
+        verify(postService, times(1)).updatePost(postId, updateRequest);
     }
 
 
