@@ -401,5 +401,25 @@ class PostControllerTest {
         verify(postService, times(1)).updatePost(postId, updateRequest);
     }
 
+    @Test
+    @WithMockUser(username = "testuser", roles = "USER")
+    void should_return_204_when_post_deleted() throws Exception {
+        // Given
+        Long postId = 1L;
 
+        // Mock des services - utilise les données du setup
+        when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(mockUser);
+        doNothing().when(postService).deletePost(postId);
+
+        // When & Then
+        mockMvc.perform(delete(API_BASE_PATH + "/{id}", postId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .with(csrf()))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string("")); // Aucun contenu dans la réponse
+
+        // Verify interactions
+        verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();
+        verify(postService, times(1)).deletePost(postId);
+    }
 }
