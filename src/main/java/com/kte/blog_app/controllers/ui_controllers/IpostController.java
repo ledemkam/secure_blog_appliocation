@@ -4,9 +4,8 @@ import com.kte.blog_app.domain.dto.ErrorDto;
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
 import com.kte.blog_app.domain.dto.request.UpdatePostRequest;
 import com.kte.blog_app.domain.dto.response.PostResponse;
-import com.kte.blog_app.domain.entities.Post;
 import com.kte.blog_app.domain.entities.PostStatus;
-import com.kte.blog_app.domain.entities.User;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -58,7 +57,7 @@ public interface IpostController {
     @Operation(summary = "Get All Posts by Author and Category")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "OK"),
-            @ApiResponse(responseCode = "500", description = "Internal Server Error",
+            @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
     ResponseEntity<List<PostResponse>> getAllPostByAuthorAndCategory(
