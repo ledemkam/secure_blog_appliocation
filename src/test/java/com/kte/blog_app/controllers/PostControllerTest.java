@@ -309,4 +309,91 @@ class PostControllerTest {
         // Check that no service is being called
         verify(postService, never()).getAllPostByCategory(any());
     }
+
+    @Test
+    void Should_Return_200_Post_When_Posts_by_Author_and_Category_exists() throws Exception {
+        // Given - Auteur et catégorie existants avec des posts
+        Long authorId = 1L;
+        PostStatus category = PostStatus.PUBLISHED;
+
+        // Mock User (auteur)
+        User mockAuthor = User.builder()
+                .id(authorId)
+                .name("John Doe")
+                .email("john.doe@test.com")
+                .createDate(LocalDateTime.now().minusMonths(1))
+                .posts(new ArrayList<>())
+                .build();
+
+        // Mock AuthorResponse
+        AuthorResponse authorResponse = AuthorResponse.builder()
+                .id(authorId)
+                .name("John Doe")
+                .build();
+
+        // Mock liste de PostResponse pour cet auteur et cette catégorie
+        List<PostResponse> expectedPosts = List.of(
+                PostResponse.builder()
+                        .id(1L)
+                        .title("John's First Published Post")
+                        .content("Content of John's first published post")
+                        .category(PostStatus.PUBLISHED)
+                        .author(authorResponse)
+                        .createDate(LocalDateTime.now().minusDays(5))
+                        .updateDate(LocalDateTime.now().minusDays(3))
+                        .build(),
+                PostResponse.builder()
+                        .id(2L)
+                        .title("John's Second Published Post")
+                        .content("Content of John's second published post")
+                        .category(PostStatus.PUBLISHED)
+                        .author(authorResponse)
+                        .createDate(LocalDateTime.now().minusDays(2))
+                        .updateDate(LocalDateTime.now().minusDays(1))
+                        .build()
+        );
+
+        // Mock services
+        when(userService.getUserId(authorId)).thenReturn(mockAuthor);
+        when(postService.getAllPostByAuthorAndCategory(mockAuthor, category)).thenReturn(expectedPosts);
+
+        // When & Then - Test execution
+        mockMvc.perform(get("/api/v1/posts/search")
+                        .param("authorId", String.valueOf(authorId))
+                        .param("category", category.name())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", ""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1L))
+                .andExpect(jsonPath("$[0].title").value("John's First Published Post"))
+                .andExpect(jsonPath("$[0].category").value("PUBLISHED"))
+                .andExpect(jsonPath("$[0].author.id").value(authorId))
+                .andExpect(jsonPath("$[0].author.name").value("John Doe"))
+                .andExpect(jsonPath("$[1].id").value(2L))
+                .andExpect(jsonPath("$[1].title").value("John's Second Published Post"))
+                .andExpect(jsonPath("$[1].category").value("PUBLISHED"))
+                .andExpect(jsonPath("$[1].author.id").value(authorId))
+                .andExpect(jsonPath("$[1].author.name").value("John Doe"));
+
+        // Vérifications
+        verify(userService, times(1)).getUserId(authorId);
+        verify(postService, times(1)).getAllPostByAuthorAndCategory(mockAuthor, category);
+    }
+
+    @Test
+    void Should_Return_500_When_Posts_Invalid_author_and_category_Parameter() throws Exception{
+        // When & Then - Test with invalid parameter
+        mockMvc.perform(get("/api/v1/posts/search")
+                        .param("author", "INVALID_AUTHOR")
+                        .param("category", "INVALID_CATEGORY")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", ""))
+                .andExpect(status().isInternalServerError()); // 500 for invalid parameter
+
+        // Checking
+        verify(postService, never()).getAllPostByCategory(any());
+        verify(userService, never()).getUserId(any());
+    }
 }
