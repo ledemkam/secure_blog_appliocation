@@ -1,19 +1,17 @@
 package com.kte.blog_app.mappers;
 
+import com.kte.blog_app.domain.dto.request.RegisterRequest;
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
 import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;
 
-import org.mapstruct.BeanMapping;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import org.mapstruct.*;
 
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
     /**
-     * entity to response
+     * entity to response without password
      */
     UserResponse toResponse(User user);
 
@@ -23,4 +21,6 @@ public interface UserMapper {
      */
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntity(UpdateUserRequest request, @MappingTarget User user);
+
+
 }
