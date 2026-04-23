@@ -1,6 +1,6 @@
 package com.kte.blog_app.mappers;
 
-import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
+
 import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;
 import org.junit.jupiter.api.DisplayName;
@@ -47,4 +47,16 @@ class UserMapperTest {
         // Password should NOT be included in response (security check)
         // UserResponse doesn't have a password field, so this is guaranteed by design
     }
+
+    @Test
+    @DisplayName("toResponse: Should return null when user is null")
+    void toResponse_should_return_Null_when_User_IsNull() {
+        // When
+        UserResponse response = userMapper.toResponse(null);
+
+        // Then
+        assertThat(response).isNull();
+    }
+
+
 }
