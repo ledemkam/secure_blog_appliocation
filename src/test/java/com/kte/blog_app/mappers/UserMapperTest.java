@@ -58,5 +58,28 @@ class UserMapperTest {
         assertThat(response).isNull();
     }
 
+    @Test
+    @DisplayName("toResponse: Should handle user with minimal data")
+    void toResponse_should_Handle_Minimal_Data() {
+        // Given
+        User user = User.builder()
+                .id(2L)
+                .name("Jane")
+                .email("jane@test.com")
+                .createDate(null) // Test with null date
+                .build();
+
+        // When
+        UserResponse response = userMapper.toResponse(user);
+
+        // Then
+        assertThat(response).isNotNull();
+        assertThat(response.getId()).isEqualTo(2L);
+        assertThat(response.getName()).isEqualTo("Jane");
+        assertThat(response.getEmail()).isEqualTo("jane@test.com");
+        assertThat(response.getCreateDate()).isNull();
+    }
+
+
 
 }
