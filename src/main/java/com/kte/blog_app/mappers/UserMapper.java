@@ -1,6 +1,5 @@
 package com.kte.blog_app.mappers;
 
-import com.kte.blog_app.domain.dto.request.RegisterRequest;
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
 import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;

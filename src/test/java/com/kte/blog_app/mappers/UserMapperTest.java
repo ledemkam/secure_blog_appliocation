@@ -139,6 +139,32 @@ class UserMapperTest {
     }
 
     @Test
+    @DisplayName("updateEntity: Should handle completely null request")
+    void update_Entity_should_Handle_Completely_Null_Request() {
+        // Given
+        LocalDateTime originalCreateDate = LocalDateTime.now().minusDays(3);
+        User existingUser = User.builder()
+                .id(5L)
+                .name("UnchangedName")
+                .email("unchanged@email.com")
+                .password("unchangedPassword")
+                .createDate(originalCreateDate)
+                .build();
+
+        UpdateUserRequest emptyRequest = UpdateUserRequest.builder().build();
+
+        // When
+        userMapper.updateEntity(emptyRequest, existingUser);
+
+        // Then - Nothing should change
+        assertThat(existingUser.getId()).isEqualTo(5L);
+        assertThat(existingUser.getName()).isEqualTo("UnchangedName");
+        assertThat(existingUser.getEmail()).isEqualTo("unchanged@email.com");
+        assertThat(existingUser.getPassword()).isEqualTo("unchangedPassword");
+        assertThat(existingUser.getCreateDate()).isEqualTo(originalCreateDate);
+    }
+
+    @Test
     @DisplayName("updateEntity: Should update only name when email is null")
     void update_Entity_should_Update_Only_Name_when_Email_Is_Null() {
         // Given
