@@ -130,6 +130,20 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findByEmail(testEmail);
     }
 
+    @Test
+    @DisplayName("Should return empty Optional when email does not exist")
+    void should_return_empty_when_email_not_exist() {
+        // Given
+        String nonExistentEmail = "notfound@example.com";
+        when(userRepository.findByEmail(nonExistentEmail)).thenReturn(Optional.empty());
 
+        // When
+        Optional<User> result = userService.findByEmail(nonExistentEmail);
+
+        // Then
+        assertThat(result).isEmpty();
+
+        verify(userRepository, times(1)).findByEmail(nonExistentEmail);
+    }
 
 }
