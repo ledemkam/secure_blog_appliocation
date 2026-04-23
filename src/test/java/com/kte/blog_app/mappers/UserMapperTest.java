@@ -1,6 +1,7 @@
 package com.kte.blog_app.mappers;
 
 
+import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
 import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;
 import org.junit.jupiter.api.DisplayName;
@@ -78,6 +79,36 @@ class UserMapperTest {
         assertThat(response.getName()).isEqualTo("Jane");
         assertThat(response.getEmail()).isEqualTo("jane@test.com");
         assertThat(response.getCreateDate()).isNull();
+    }
+
+    @Test
+    @DisplayName("updateEntity: Should update only non-null fields")
+    void shoul_map_update_Entity() {
+        // Given
+        User existingUser = User.builder()
+                .id(3L)
+                .name("OriginalName")
+                .email("original@email.com")
+                .password("originalPassword")
+                .createDate(LocalDateTime.now().minusDays(1))
+                .build();
+
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .name("UpdatedName")
+                .email("updated@email.com")
+                .build();
+
+        // When
+        userMapper.updateEntity(request, existingUser);
+
+        // Then
+        assertThat(existingUser.getName()).isEqualTo("UpdatedName");
+        assertThat(existingUser.getEmail()).isEqualTo("updated@email.com");
+
+        // These fields should remain unchanged
+        assertThat(existingUser.getId()).isEqualTo(3L);
+        assertThat(existingUser.getPassword()).isEqualTo("originalPassword");
+        assertThat(existingUser.getCreateDate()).isNotNull();
     }
 
 
