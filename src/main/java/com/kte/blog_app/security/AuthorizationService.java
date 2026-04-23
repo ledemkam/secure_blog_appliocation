@@ -34,7 +34,7 @@ public class AuthorizationService {
         return isCurrentUserAdmin() || currentUserId.equals(resourceOwnerId);
     }
 
-    /**  Retrice connected user (avoid circular dependency)     */
+    /**  Retrive connected user (avoid circular dependency)     */
     public User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
