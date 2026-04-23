@@ -111,6 +111,55 @@ class UserMapperTest {
         assertThat(existingUser.getCreateDate()).isNotNull();
     }
 
+    @Test
+    @DisplayName("updateEntity: Should ignore null values in update request")
+    void update_Entity_should_Ignore_Null_Values() {
+        // Given
+        User existingUser = User.builder()
+                .id(4L)
+                .name("KeepThisName")
+                .email("keep@this.email")
+                .password("keepPassword")
+                .createDate(LocalDateTime.now().minusDays(2))
+                .build();
 
+        UpdateUserRequest requestWithNulls = UpdateUserRequest.builder()
+                .name(null) // Should be ignored
+                .email("updated@email.com") // Should be applied
+                .build();
+
+        // When
+        userMapper.updateEntity(requestWithNulls, existingUser);
+
+        // Then
+        assertThat(existingUser.getName()).isEqualTo("KeepThisName"); // Unchanged
+        assertThat(existingUser.getEmail()).isEqualTo("updated@email.com"); // Updated
+        assertThat(existingUser.getPassword()).isEqualTo("keepPassword"); // Unchanged
+        assertThat(existingUser.getId()).isEqualTo(4L); // Unchanged
+    }
+
+    @Test
+    @DisplayName("updateEntity: Should update only name when email is null")
+    void update_Entity_should_Update_Only_Name_when_Email_Is_Null() {
+        // Given
+        User existingUser = User.builder()
+                .id(6L)
+                .name("OldName")
+                .email("keep@email.com")
+                .password("password123")
+                .build();
+
+        UpdateUserRequest request = UpdateUserRequest.builder()
+                .name("NewName")
+                .email(null) // Should be ignored
+                .build();
+
+        // When
+        userMapper.updateEntity(request, existingUser);
+
+        // Then
+        assertThat(existingUser.getName()).isEqualTo("NewName");
+        assertThat(existingUser.getEmail()).isEqualTo("keep@email.com"); // Unchanged
+    }
 
 }
