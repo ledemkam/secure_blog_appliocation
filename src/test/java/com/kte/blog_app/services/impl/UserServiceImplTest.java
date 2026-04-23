@@ -113,6 +113,23 @@ class UserServiceImplTest {
         verify(userRepository, times(1)).findById(nonExistentId);
     }
 
+    @Test
+    @DisplayName("Should return user when email exists")
+    void should_return_user_when_email_exists() {
+        // Given
+        when(userRepository.findByEmail(testEmail)).thenReturn(Optional.of(testUser));
+
+        // When
+        Optional<User> result = userService.findByEmail(testEmail);
+
+        // Then
+        assertThat(result).isPresent();
+        assertThat(result.get().getEmail()).isEqualTo(testEmail);
+        assertThat(result.get().getName()).isEqualTo("Test User");
+
+        verify(userRepository, times(1)).findByEmail(testEmail);
+    }
+
 
 
 }
