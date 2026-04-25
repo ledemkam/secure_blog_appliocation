@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Bean
@@ -47,9 +48,7 @@ public class SecurityConfig {
             http
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
-                            .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()  // ← LIGNE AJOUTÉE
-                            .requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")
-                            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
                             .requestMatchers("/actuator/**").permitAll()
                             .requestMatchers(
                                     "/swagger-ui/**",
