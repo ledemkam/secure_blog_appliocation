@@ -1,5 +1,6 @@
 package com.kte.blog_app.services.impl;
 
+
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.exceptions.UserNotFoundException;
 import com.kte.blog_app.mappers.UserMapper;
@@ -11,40 +12,31 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
-import com.kte.blog_app.domain.entities.User;
-import com.kte.blog_app.exceptions.UserNotFoundException;
-import com.kte.blog_app.mappers.UserMapper;
-import com.kte.blog_app.repositories.UserRepository;
-import com.kte.blog_app.security.AuthorizationService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
-import java.util.Optional;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+
+@ExtendWith(SpringExtension.class)
 @DisplayName("UserService Tests")
 class UserServiceImplTest {
 
@@ -75,7 +67,9 @@ class UserServiceImplTest {
                 .password("hashedPassword123")
                 .createDate(LocalDateTime.now().minusDays(1))
                 .build();
+
     }
+
 
     @Test
     @DisplayName("Should return user when ID exists")
@@ -145,5 +139,62 @@ class UserServiceImplTest {
 
         verify(userRepository, times(1)).findByEmail(nonExistentEmail);
     }
+
+    @Test
+    @DisplayName("Should return all users")
+    void should_return_all_users() {
+        // Given
+        User user2 = User.builder()
+                .id(2L)
+                .name("User Two")
+                .email("user2@example.com")
+                .password("password456")
+                .createDate(LocalDateTime.now())
+                .build();
+
+        List<User> expectedUsers = List.of(testUser, user2);
+        when(userRepository.findAll()).thenReturn(expectedUsers);
+
+        // When
+        List<User> result = userService.getAllUsers();
+
+        // Then
+
+        assertThat(result).containsExactlyInAnyOrder(testUser, user2);
+
+        verify(userRepository, times(1)).findAll();
+    }
+
+    @Test
+    @DisplayName("Should update user successfully when authorized")
+    @WithMockUser(username = "test@example.com", roles = "USER")
+    void should_update_user_when_authorized() {
+        // Given
+        UpdateUserRequest updateRequest = UpdateUserRequest.builder()
+                .name("Updated Name")
+                .email("updated@example.com")
+                .build();
+
+        // ✅ Mock du repository pour findByEmail (utilisé par getCurrentAuthenticatedUser)
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(authorizationService.canAccessResource(testUserId, testUserId)).thenReturn(true);
+        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(testUser)).thenReturn(testUser);
+
+        // When
+        User result = userService.updateUser(testUserId, updateRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(testUserId);
+
+        verify(userRepository).findByEmail("test@example.com");
+        verify(authorizationService).canAccessResource(testUserId, testUserId);
+        verify(userRepository).findById(testUserId);
+        verify(userMapper).updateEntity(updateRequest, testUser);
+        verify(userRepository).save(testUser);
+    }
+
+
 
 }
