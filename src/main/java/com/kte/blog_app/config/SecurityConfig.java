@@ -49,6 +49,7 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/api/v1/auth/login", "/api/v1/auth/register").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()  // ← LIGNE AJOUTÉE
                             .requestMatchers(HttpMethod.GET, "/api/v1/user").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").hasRole("ADMIN")
                             .requestMatchers("/actuator/**").permitAll()
                             .requestMatchers(
                                     "/swagger-ui/**",
