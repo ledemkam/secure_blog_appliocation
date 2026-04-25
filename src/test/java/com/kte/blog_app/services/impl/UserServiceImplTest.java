@@ -195,6 +195,23 @@ class UserServiceImplTest {
         verify(userRepository).save(testUser);
     }
 
+    @Test
+    @DisplayName("Should delete user successfully when authorized")
+    @WithMockUser(username = "test@example.com", roles = "USER")  // ✅ Ajouter cette annotation
+    void should_delete_user_when_authorized() {
+        // Given
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser)); // ✅ Ajouter ce mock
+        when(authorizationService.canAccessResource(testUserId, testUserId)).thenReturn(true);
+        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
 
+        // When
+        userService.deleteUser(testUserId);
+
+        // Then
+        verify(userRepository).findByEmail("test@example.com"); // ✅ Vérifier l'appel correct
+        verify(authorizationService).canAccessResource(testUserId, testUserId);
+        verify(userRepository).findById(testUserId);
+        verify(userRepository).delete(testUser);
+    }
 
 }
