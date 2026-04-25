@@ -24,10 +24,12 @@ public interface IpostController {
 
     @Operation(summary = "Create Post")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Created"), // 201 au lieu de 200
+            @ApiResponse(responseCode = "201", description = "Created"),
             @ApiResponse(responseCode = "400", description = "Bad Request",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
@@ -52,7 +54,7 @@ public interface IpostController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    ResponseEntity <List<PostResponse>> getAllPostByCategory(PostStatus category);
+    ResponseEntity<List<PostResponse>> getAllPostByCategory(PostStatus category);
 
     @Operation(summary = "Get All Posts by Author and Category")
     @ApiResponses(value = {
@@ -71,6 +73,8 @@ public interface IpostController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Not Found",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
@@ -85,6 +89,8 @@ public interface IpostController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Not Found",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
@@ -92,5 +98,3 @@ public interface IpostController {
     })
     ResponseEntity<Void> deletePost(Long id);
 }
-
-

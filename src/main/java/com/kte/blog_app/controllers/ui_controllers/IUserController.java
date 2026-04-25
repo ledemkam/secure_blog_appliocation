@@ -47,6 +47,8 @@ public interface IUserController {
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "404", description = "Not Found",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
@@ -54,6 +56,18 @@ public interface IUserController {
     })
     ResponseEntity<User> updateUser(Long id, UpdateUserRequest updateUserRequest);
 
-
+    @Operation(summary = "Delete User By Id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",        // ← ajout
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found",
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+            @ApiResponse(responseCode = "500", description = "Internal Server Error",   // ← ajout
+                    content = @Content(schema = @Schema(implementation = ErrorDto.class))),
+    })
+    ResponseEntity<Void> deleteUser(Long id);
 }
 
