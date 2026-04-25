@@ -3,6 +3,7 @@ package com.kte.blog_app.controllers;
 import com.kte.blog_app.controllers.ui_controllers.IUserController;
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.UserNotFoundException;
 import com.kte.blog_app.security.UserSecurityService;
 import com.kte.blog_app.services.UserService;
 import jakarta.validation.Valid;
@@ -40,16 +41,11 @@ public class UserController implements IUserController {
     public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
         log.info("Received request to get user with email: {}", email);
 
-        Optional<User> userOptional = userService.findByEmail(email);
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            log.debug("Successfully retrieved user with email: {} and name: '{}'", email, user.getName());
-            return ResponseEntity.ok(user);
-        } else {
-            log.debug("No user found with email: {}", email);
-            return ResponseEntity.notFound().build();
-        }
+        log.debug("Successfully retrieved user with email: {} and name: '{}'", email, user.getName());
+        return ResponseEntity.ok(user);
     }
 
 
@@ -62,5 +58,15 @@ public class UserController implements IUserController {
         User updatedUser = userService.updateUser(id, updateUserRequest);
         log.info("Successfully updated user with ID: {}", id);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @Override
+    @DeleteMapping("/{id}")
+    @PreAuthorize("@userSecurityService.canDeleteUser(#id)")  // only user or admin can delete
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        log.info("Received request to delete user with ID: {}", id);
+        userService.deleteUser(id);
+        log.info("Successfully deleted user with ID: {}", id);
+        return ResponseEntity.noContent().build();
     }
 }
