@@ -24,6 +24,9 @@ public class TestSecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll() // GET autorisés
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/**").authenticated() // POST nécessitent auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/user/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/user/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(exceptions -> exceptions
