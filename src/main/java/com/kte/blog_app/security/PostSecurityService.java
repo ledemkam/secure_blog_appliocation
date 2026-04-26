@@ -19,10 +19,10 @@ import org.springframework.stereotype.Service;
 public class PostSecurityService {
 
     private final UserService userService;
-    private final PostRepository postRepository; // ✅ Accès direct au repository
+    private final PostRepository postRepository; // Direct access to repository
 
     /**
-     * Récupère l'utilisateur actuellement authentifié
+     * Retrieves the currently authenticated user
      */
     public User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -37,7 +37,7 @@ public class PostSecurityService {
     }
 
     /**
-     * Vérifie si l'utilisateur peut modifier un post
+     * Checks if the user can modify a post
      */
     public void validatePostModificationRights(Post post, User user) {
         if (!post.getAuthor().getId().equals(user.getId())) {
@@ -48,7 +48,7 @@ public class PostSecurityService {
     }
 
     /**
-     * Vérifie si l'utilisateur peut accéder à un post
+     * Checks if the user can access a post
      */
     public boolean canAccessPost(Post post, User user) {
         return post.getCategory() == PostStatus.PUBLISHED ||
@@ -56,7 +56,7 @@ public class PostSecurityService {
     }
 
     /**
-     * Vérifie si l'utilisateur peut modifier un post
+     * Checks if the user can update a post
      */
     public boolean canUpdatePost(Long postId) {
         try {
@@ -71,12 +71,12 @@ public class PostSecurityService {
     }
 
     /**
-     * Vérifie si l'utilisateur peut supprimer un post
+     * Checks if the user can delete a post
      */
     public boolean canDeletePost(Long postId) {
         try {
             User currentUser = getCurrentAuthenticatedUser();
-            Post post = postRepository.findById(postId) // ✅ Récupère sans supprimer
+            Post post = postRepository.findById(postId) // ✅ Retrieves without deleting
                     .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + postId));
             return post.getAuthor().getId().equals(currentUser.getId());
         } catch (Exception e) {

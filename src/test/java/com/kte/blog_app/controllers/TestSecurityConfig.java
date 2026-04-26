@@ -23,8 +23,8 @@ public class TestSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll() // GET autorisés
-                        .requestMatchers(HttpMethod.POST, "/api/v1/posts/**").authenticated() // POST nécessitent auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll() // GET requests allowed
+                        .requestMatchers(HttpMethod.POST, "/api/v1/posts/**").authenticated() // POST requests require authentication
                         .requestMatchers(HttpMethod.GET, "/api/v1/user/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/v1/user/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").authenticated()

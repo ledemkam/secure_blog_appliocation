@@ -18,7 +18,7 @@ public class UserSecurityService {
     private final AuthorizationService authorizationService;
 
     /**
-     * Vérifie si l'utilisateur courant peut supprimer le compte (lui-même OU admin)
+     * Checks if the current user can delete the account (themselves OR admin)
      */
     public boolean canDeleteUser(Long targetUserId) {
         try {
@@ -31,12 +31,12 @@ public class UserSecurityService {
     }
 
     /**
-     * Vérifie si l'utilisateur courant peut modifier le compte (uniquement lui-même)
+     * Checks if the current user can update the account (themselves only)
      */
     public boolean canUpdateUser(Long targetUserId) {
         try {
             User currentUser = authorizationService.getCurrentAuthenticatedUser();
-            return currentUser.getId().equals(targetUserId); // Pas d'admin ici
+            return currentUser.getId().equals(targetUserId); // No admin check here
         } catch (Exception e) {
             log.error("Error checking update permissions for user {}: {}", targetUserId, e.getMessage());
             return false;

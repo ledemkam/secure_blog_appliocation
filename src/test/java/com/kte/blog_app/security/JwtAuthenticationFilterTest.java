@@ -62,21 +62,21 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void doFilterInternal_withValidToken_shouldAuthenticateAndSetUserId() throws Exception {
-        // Token valide dans le header Authorization
+        // Valid token in the Authorization header
         when(request.getHeader("Authorization")).thenReturn("Bearer valid.jwt.token");
         when(authenticationService.validateToken("valid.jwt.token")).thenReturn(blogUserDetails);
 
         filter.doFilterInternal(request, response, filterChain);
 
-        // SecurityContext doit contenir l'authentification
+        // SecurityContext must contain the authentication
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertThat(auth).isNotNull();
         assertThat(auth.getPrincipal()).isEqualTo(blogUserDetails);
 
-        // userId doit être positionné en attribut de la requête
+        // userId must be set as a request attribute
         verify(request).setAttribute("userId", 42L);
 
-        // Le filtre doit toujours appeler la chaîne
+        // The filter must always call the chain
         verify(filterChain).doFilter(request, response);
     }
 
@@ -86,10 +86,10 @@ class JwtAuthenticationFilterTest {
 
         filter.doFilterInternal(request, response, filterChain);
 
-        // Aucune authentification ne doit être posée
+        // No authentication should be set
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
 
-        // validateToken ne doit jamais être appelé
+        // validateToken should never be called
         verifyNoInteractions(authenticationService);
 
         verify(filterChain).doFilter(request, response);
@@ -97,7 +97,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void doFilterInternal_withInvalidBearerPrefix_shouldNotAuthenticate() throws Exception {
-        // Header présent mais sans "Bearer "
+        // Header present but without "Bearer "
         when(request.getHeader("Authorization")).thenReturn("Basic sometoken");
 
         filter.doFilterInternal(request, response, filterChain);
@@ -109,7 +109,7 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void doFilterInternal_withInvalidToken_shouldNotAuthenticateAndStillContinueChain() throws Exception {
-        // Token invalide → validateToken lève une exception
+        // Invalid token → validateToken throws an exception
         when(request.getHeader("Authorization")).thenReturn("Bearer invalid.token");
         when(authenticationService.validateToken("invalid.token"))
                 .thenThrow(new RuntimeException("Invalid JWT"));

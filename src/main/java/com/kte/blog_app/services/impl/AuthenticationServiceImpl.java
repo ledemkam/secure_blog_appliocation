@@ -37,7 +37,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration:86400000}")  // ← UTILISE la propriété du application.yaml
+    @Value("${jwt.expiration:86400000}")  // ← USES the property from application.yaml
     private Long jwtExpirationMs;
 
     @Override
@@ -59,7 +59,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))  // ← Corrigé
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))  // ← Fixed
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -78,13 +78,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public UserDetails register(String name, String email, String password) {  // ← Signature corrigée
-        // Vérifier si l'utilisateur existe déjà
+    public UserDetails register(String name, String email, String password) {  // ← Fixed signature
+        // Check if user already exists
         if (userRepository.findByEmail(email).isPresent()) {
             throw new UserAlreadyExistsException("User with email " + email + " already exists");
         }
 
-        // Créer nouvel utilisateur
+        // Create new user
         User newUser = User.builder()
                 .name(name)
                 .email(email)

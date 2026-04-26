@@ -88,7 +88,7 @@ class AuthorizationServiceTest {
     void canAccessResource_whenCurrentUserIsAdmin_shouldReturnTrue() {
         authenticateAs("admin@example.com", "ROLE_ADMIN");
 
-        // Même si l'utilisateur n'est pas propriétaire, admin peut accéder
+        // Even if the user is not the owner, admin can access
         assertThat(authorizationService.canAccessResource(1L, 99L)).isTrue();
     }
 

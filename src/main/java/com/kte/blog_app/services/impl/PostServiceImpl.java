@@ -83,7 +83,7 @@ public class PostServiceImpl implements PostService {
         Post existingPost = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
 
-        // Vérifier l'autorisation
+        // Check authorization
         postSecurityService.validatePostModificationRights(existingPost, currentUser);
 
         postMapper.updateEntity(updatePostRequest, existingPost);
@@ -103,7 +103,7 @@ public class PostServiceImpl implements PostService {
         Post existingPost = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException(postNotFoundMessage + id));
 
-        // Vérifier l'autorisation
+        // Check authorization
         postSecurityService.validatePostModificationRights(existingPost, currentUser);
 
         postRepository.deleteById(id);

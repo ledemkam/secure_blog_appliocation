@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public User updateUser(Long id, UpdateUserRequest updateUserRequest) {
-        // ✅ Récupérer l'utilisateur directement sans PostSecurityService
+        // ✅ Retrieve user directly without PostSecurityService
         User currentUser = getCurrentAuthenticatedUser();
         log.info("User {} attempting to update user with id: {}", currentUser.getId(), id);
 
@@ -80,7 +80,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public void deleteUser(Long id) {
-        // ✅ Récupérer l'utilisateur directement sans PostSecurityService
+        // ✅ Retrieve user directly without PostSecurityService
         User currentUser = getCurrentAuthenticatedUser();
         log.info("User {} attempting to delete user with id: {}", currentUser.getId(), id);
 
@@ -99,7 +99,7 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * ✅ Méthode privée pour récupérer l'utilisateur connecté sans dépendance circulaire
+     * ✅ Private method to retrieve the authenticated user without circular dependency
      */
     private User getCurrentAuthenticatedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

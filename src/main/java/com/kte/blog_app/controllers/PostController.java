@@ -87,11 +87,11 @@ public class PostController implements IpostController {
 
         log.info("Received request to get all posts by author ID: {} and category: {}", authorId, category);
 
-        // Récupérer l'utilisateur par son ID
+        // Retrieve user by ID
         User author = userService.getUserId(authorId);
         log.debug("Found author: '{}' (ID: {})", author.getName(), author.getId());
 
-        // Appeler le service
+        // Call the service
         List<PostResponse> posts = postService.getAllPostByAuthorAndCategory(author, category);
 
         log.debug("Successfully retrieved {} posts for author '{}' (ID: {}) with category: {}",

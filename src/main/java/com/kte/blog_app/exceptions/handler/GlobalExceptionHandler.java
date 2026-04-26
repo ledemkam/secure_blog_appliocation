@@ -30,9 +30,9 @@ public class GlobalExceptionHandler {
                 UsernameNotFoundException.class
         })
         public ResponseEntity<ErrorDto> handleAuthenticationException(Exception ex) {
-            log.warn("Authentication failed: {}", ex.getMessage()); // log.warn, pas log.error
+            log.warn("Authentication failed: {}", ex.getMessage()); // log.warn, not log.error
             ErrorDto errorDto = new ErrorDto();
-            errorDto.setError("Invalid credentials"); // Message générique pour la sécurité
+            errorDto.setError("Invalid credentials"); // Generic message for security
             return new ResponseEntity<>(errorDto, HttpStatus.UNAUTHORIZED);
         }
 

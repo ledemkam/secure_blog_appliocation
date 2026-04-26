@@ -376,7 +376,7 @@ class PostControllerTest {
                 PostStatus.PUBLISHED,
                 defaultAuthorResponse,
                 baseDateTime,
-                baseDateTime.plusMinutes(5) // updateDate différente
+                baseDateTime.plusMinutes(5) // different updateDate
         );
 
         // Mock services
@@ -407,7 +407,7 @@ class PostControllerTest {
         // Given
         Long postId = 1L;
 
-        // Mock des services - utilise les données du setup
+        // Mock services - uses data from setup
         when(postSecurityService.getCurrentAuthenticatedUser()).thenReturn(mockUser);
         doNothing().when(postService).deletePost(postId);
 
@@ -416,7 +416,7 @@ class PostControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .with(csrf()))
                 .andExpect(status().isNoContent())
-                .andExpect(content().string("")); // Aucun contenu dans la réponse
+                .andExpect(content().string("")); // No content in the response
 
         // Verify interactions
         verify(postSecurityService, times(1)).getCurrentAuthenticatedUser();

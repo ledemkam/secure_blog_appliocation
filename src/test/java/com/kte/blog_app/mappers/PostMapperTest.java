@@ -44,7 +44,7 @@ class PostMapperTest {
 
         PostResponse response = postMapper.toResponse(post);
 
-        // Vérifications du Post
+        // Post assertions
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(10L);
         assertThat(response.getTitle()).isEqualTo("title");
@@ -53,7 +53,7 @@ class PostMapperTest {
         assertThat(response.getCreateDate()).isEqualTo(post.getCreateDate());
         assertThat(response.getUpdateDate()).isEqualTo(post.getUpdateDate());
         
-        // Vérifications de l'auteur
+        // Author assertions
         assertThat(response.getAuthor()).isNotNull();
         assertThat(response.getAuthor().getId()).isEqualTo(1L);
         assertThat(response.getAuthor().getName()).isEqualTo("author");
@@ -98,7 +98,7 @@ class PostMapperTest {
         assertThat(response).isNotNull();
         assertThat(response.getId()).isEqualTo(5L);
         assertThat(response.getName()).isEqualTo("Bob");
-        // email et password ne sont pas exposés dans AuthorResponse
+        // email and password are not exposed in AuthorResponse
     }
 
     @Test
@@ -123,7 +123,7 @@ class PostMapperTest {
         assertThat(post.getTitle()).isEqualTo("Nouveau post");
         assertThat(post.getContent()).isEqualTo("Contenu minimal de dix caractères");
         assertThat(post.getCategory()).isEqualTo(PostStatus.DRAFT);
-        // id et author ne sont pas dans la requête
+        // id and author are not in the request
         assertThat(post.getId()).isNull();
         assertThat(post.getAuthor()).isNull();
     }
@@ -148,14 +148,14 @@ class PostMapperTest {
         UpdatePostRequest request = UpdatePostRequest.builder()
                 .id(7L)
                 .title("Titre mis à jour")
-                .content(null) // null → doit être IGNORÉ
+                .content(null) // null → must be IGNORED
                 .category(PostStatus.PUBLISHED)
                 .build();
 
         postMapper.updateEntity(request, existingPost);
 
         assertThat(existingPost.getTitle()).isEqualTo("Titre mis à jour");
-        assertThat(existingPost.getContent()).isEqualTo("Contenu original"); // non écrasé
+        assertThat(existingPost.getContent()).isEqualTo("Contenu original"); // not overwritten
         assertThat(existingPost.getCategory()).isEqualTo(PostStatus.PUBLISHED);
         assertThat(existingPost.getId()).isEqualTo(7L);
     }
