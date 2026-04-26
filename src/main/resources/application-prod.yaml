@@ -29,7 +29,7 @@ management:
     health:
       show-details: never
 
-# Configuration de logging pour la production
+# Configuration  logging for production
 logging:
   level:
     root: WARN

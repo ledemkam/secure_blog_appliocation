@@ -25,12 +25,12 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,info,metrics
   endpoint:
     health:
       show-details: always
 
-# Configuration de logging spécifique au développement
+# Configuration  logging for dev
 logging:
   level:
     root: INFO
