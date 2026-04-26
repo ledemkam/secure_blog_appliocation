@@ -56,14 +56,13 @@ class UserControllerTest {
     private User updatedUser;
     private UpdateUserRequest updateRequest;
     private Long existingUserId;
-    private Long nonExistentUserId;
     private LocalDateTime baseDateTime;
 
     @BeforeEach
     void setUp() {
         baseDateTime = LocalDateTime.now();
         existingUserId = 1L;
-        nonExistentUserId = 999L;
+
 
         mockUser = User.builder()
                 .id(existingUserId)
@@ -137,10 +136,20 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.email").value("updated@test.com"));
 
         verify(userService, times(1)).updateUser(existingUserId, updateRequest);
-       // verify(userSecurityService, times(1)).canUpdateUser(existingUserId);
     }
 
     @Test
-    void deleteUser() {
+    @WithMockUser(username = "test@test.com", roles = "USER")
+    void should_return_204_when_user_deleted() throws Exception {
+        // Given
+        doNothing().when(userService).deleteUser(existingUserId);
+
+        // When & Then
+        mockMvc.perform(delete(API_BASE_PATH + "/{id}", existingUserId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent())
+                .andExpect(content().string(""));
+
+        verify(userService, times(1)).deleteUser(existingUserId);
     }
 }
