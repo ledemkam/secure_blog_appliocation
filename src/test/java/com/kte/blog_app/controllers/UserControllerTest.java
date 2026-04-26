@@ -1,6 +1,7 @@
 package com.kte.blog_app.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.mappers.UserMapper;
 import com.kte.blog_app.security.UserSecurityService;
@@ -13,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
@@ -51,6 +53,8 @@ class UserControllerTest {
 
     // Common test data
     private User mockUser;
+    private User updatedUser;
+    private UpdateUserRequest updateRequest;
     private Long existingUserId;
     private Long nonExistentUserId;
     private LocalDateTime baseDateTime;
@@ -69,8 +73,21 @@ class UserControllerTest {
                 .createDate(baseDateTime)
                 .posts(new ArrayList<>())
                 .build();
-    }
 
+        updateRequest = UpdateUserRequest.builder()
+                .name("Updated Name")
+                .email("updated@test.com")
+                .build();
+
+        updatedUser = User.builder()
+                .id(existingUserId)
+                .name("Updated Name")
+                .email("updated@test.com")
+                .password("encodedPassword")
+                .createDate(baseDateTime)
+                .posts(new ArrayList<>())
+                .build();
+    }
     @Test
     void should_return_200_when_user_exists() throws Exception {
         // Given
@@ -104,7 +121,23 @@ class UserControllerTest {
     }
 
     @Test
-    void updateUser() {
+    @WithMockUser(username = "test@test.com", roles = "USER")
+    void should_return_200_when_user_updated() throws Exception {
+        // Given
+        when(userSecurityService.canUpdateUser(existingUserId)).thenReturn(true);
+        when(userService.updateUser(existingUserId, updateRequest)).thenReturn(updatedUser);
+
+        // When & Then
+        mockMvc.perform(put(API_BASE_PATH + "/{id}", existingUserId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingUserId))
+                .andExpect(jsonPath("$.name").value("Updated Name"))
+                .andExpect(jsonPath("$.email").value("updated@test.com"));
+
+        verify(userService, times(1)).updateUser(existingUserId, updateRequest);
+       // verify(userSecurityService, times(1)).canUpdateUser(existingUserId);
     }
 
     @Test
