@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +25,9 @@ public class TestSecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll() // GET autorisés
                         .requestMatchers(HttpMethod.POST, "/api/v1/posts/**").authenticated() // POST nécessitent auth
+                        .requestMatchers(HttpMethod.GET, "/api/v1/user/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/user/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/user/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .exceptionHandling(exceptions -> exceptions

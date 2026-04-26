@@ -53,13 +53,13 @@ public class GlobalExceptionHandler {
             return new ResponseEntity<>(errorDto, HttpStatus.CONFLICT);
         }
 
-        @ExceptionHandler(UserNotFoundException.class)
-        public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
-            log.error("Caught UserNotFoundException", ex);
-            ErrorDto errorDto = new ErrorDto();
-            errorDto.setError("User not found");
-            return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
-        }
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleUserNotFoundException(UserNotFoundException ex) {
+        log.error("Caught UserNotFoundException", ex);
+        ErrorDto errorDto = new ErrorDto();
+        errorDto.setError("User not found");
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND); // ← 400 → 404
+    }
 
         @ExceptionHandler(PostNotFoundException.class)
         public ResponseEntity<ErrorDto> handlePostNotFoundException(PostNotFoundException ex) {
