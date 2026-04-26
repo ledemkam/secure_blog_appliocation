@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Optional;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -87,7 +88,19 @@ class UserControllerTest {
     }
 
     @Test
-    void getUserByEmail() {
+    void should_return_200_when_User_by_Email_exist() throws Exception {
+        // Given
+        when(userService.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
+
+        // When & Then
+        mockMvc.perform(get(API_BASE_PATH + "/email/{email}", mockUser.getEmail())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(existingUserId))
+                .andExpect(jsonPath("$.name").value("Test User"))
+                .andExpect(jsonPath("$.email").value("test@test.com"));
+
+        verify(userService, times(1)).findByEmail(mockUser.getEmail());
     }
 
     @Test
