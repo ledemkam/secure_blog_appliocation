@@ -25,12 +25,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
 
-   private final PostRepository postRepository;
-   private final PostMapper postMapper;
-   private final PostSecurityService postSecurityService;
+    private static final String POST_NOT_FOUND_MESSAGE = "Post not found with id: ";
 
-   String postNotFoundMessage = "Post not found with id: ";
-   private final UserService userService;
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final PostSecurityService postSecurityService;
+    private final UserService userService;
 
     @Transactional
     @Override
@@ -50,7 +50,7 @@ public class PostServiceImpl implements PostService {
         log.debug("Getting post by id: {}", id);
 
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new PostNotFoundException(postNotFoundMessage + id));
+                .orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND_MESSAGE + id));
         return postMapper.toResponse(post);
     }
 
@@ -80,8 +80,9 @@ public class PostServiceImpl implements PostService {
         User currentUser = postSecurityService.getCurrentAuthenticatedUser();
         log.info("User {} attempting to update post with id: {}", currentUser.getId(), id);
 
+
         Post existingPost = postRepository.findById(id)
-                .orElseThrow(() -> new PostNotFoundException("Post not found with id: " + id));
+                .orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND_MESSAGE + id));
 
         // Check authorization
         postSecurityService.validatePostModificationRights(existingPost, currentUser);
@@ -101,7 +102,7 @@ public class PostServiceImpl implements PostService {
         log.info("User {} attempting to delete post with id: {}", currentUser.getId(), id);
 
         Post existingPost = postRepository.findById(id)
-                .orElseThrow(() -> new PostNotFoundException(postNotFoundMessage + id));
+                .orElseThrow(() -> new PostNotFoundException(POST_NOT_FOUND_MESSAGE + id));
 
         // Check authorization
         postSecurityService.validatePostModificationRights(existingPost, currentUser);

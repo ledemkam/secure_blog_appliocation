@@ -1,6 +1,6 @@
 package com.kte.blog_app.controllers;
 
-import com.kte.blog_app.controllers.ui_controllers.IpostController;
+import com.kte.blog_app.controllers.ui_controllers.IPostController;
 import com.kte.blog_app.domain.dto.request.CreatePostRequest;
 import com.kte.blog_app.domain.dto.request.UpdatePostRequest;
 import com.kte.blog_app.domain.dto.response.PostResponse;
@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "api/v1/posts")
-public class PostController implements IpostController {
+public class PostController implements IPostController {
 
     private final PostService postService;
     private final PostSecurityService postSecurityService;
@@ -88,7 +88,7 @@ public class PostController implements IpostController {
         log.info("Received request to get all posts by author ID: {} and category: {}", authorId, category);
 
         // Retrieve user by ID
-        User author = userService.getUserId(authorId);
+        User author = userService.getUserById(authorId);
         log.debug("Found author: '{}' (ID: {})", author.getName(), author.getId());
 
         // Call the service

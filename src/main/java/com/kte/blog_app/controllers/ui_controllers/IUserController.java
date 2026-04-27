@@ -2,7 +2,7 @@ package com.kte.blog_app.controllers.ui_controllers;
 
 import com.kte.blog_app.domain.dto.ErrorDto;
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
-import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.domain.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,7 +26,7 @@ public interface IUserController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    ResponseEntity<User> getUserById(Long id);
+    ResponseEntity<UserResponse> getUserById(Long id);
 
     @Operation(summary = "Get User By Email")
     @ApiResponses(value = {
@@ -38,7 +38,7 @@ public interface IUserController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    ResponseEntity<User> getUserByEmail(String email);
+    ResponseEntity<UserResponse> getUserByEmail(String email);
 
     @Operation(summary = "Update User")
     @ApiResponses(value = {
@@ -54,7 +54,7 @@ public interface IUserController {
             @ApiResponse(responseCode = "500", description = "Internal Server Error",
                     content = @Content(schema = @Schema(implementation = ErrorDto.class))),
     })
-    ResponseEntity<User> updateUser(Long id, UpdateUserRequest updateUserRequest);
+    ResponseEntity<UserResponse> updateUser(Long id, UpdateUserRequest updateUserRequest);
 
     @Operation(summary = "Delete User By Id")
     @ApiResponses(value = {

@@ -37,7 +37,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    @Value("${jwt.expiration:86400000}")  // ← USES the property from application.yaml
+    @Value("${jwt.expiration:86400000}")
     private Long jwtExpirationMs;
 
     @Override
@@ -59,32 +59,34 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))  // ← Fixed
+                .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     @Override
     public UserDetails validateToken(String token) {
-        try {
-            String username = extractUsername(token);
-            if (username != null && !isTokenExpired(token)) {
-                return userDetailsService.loadUserByUsername(username);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid JWT token", e);
+        //  Parse claims once — avoid double-parsing JWTs.
+        Claims claims = extractClaims(token);
+
+        if (claims.getExpiration().before(new Date())) {
+            throw new BadCredentialsException("JWT token has expired");
         }
-        return null;
+
+        String username = claims.getSubject();
+        if (username == null || username.isBlank()) {
+            throw new BadCredentialsException("JWT token has no subject");
+        }
+
+        return userDetailsService.loadUserByUsername(username);
     }
 
     @Override
-    public UserDetails register(String name, String email, String password) {  // ← Fixed signature
-        // Check if user already exists
+    public UserDetails register(String name, String email, String password) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new UserAlreadyExistsException("User with email " + email + " already exists");
         }
 
-        // Create new user
         User newUser = User.builder()
                 .name(name)
                 .email(email)
@@ -96,22 +98,17 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new BlogUserDetails(savedUser);
     }
 
-    private String extractUsername(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getSubject();
-    }
-
-    private boolean isTokenExpired(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-        return claims.getExpiration().before(new Date());
+    //  Unique parsing method — used by validateToken()
+    private Claims extractClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid JWT token");
+        }
     }
 
     private Key getSigningKey() {

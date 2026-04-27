@@ -8,7 +8,6 @@ import com.kte.blog_app.domain.entities.PostStatus;
 import com.kte.blog_app.domain.entities.User;
 
 import com.kte.blog_app.repositories.PostRepository;
-import com.kte.blog_app.services.UserService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,12 +16,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -32,7 +28,7 @@ import static org.mockito.Mockito.*;
 class PostSecurityServiceTest {
 
     @Mock
-    private UserService userService;
+    private AuthorizationService authorizationService;
 
     @Mock
     private PostRepository postRepository;
@@ -62,18 +58,12 @@ class PostSecurityServiceTest {
         SecurityContextHolder.clearContext();
     }
 
-    private void authenticateAs(String email) {
-        var auth = new UsernamePasswordAuthenticationToken(
-                email, null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContextHolder.getContext().setAuthentication(auth);
-    }
 
     // ── getCurrentAuthenticatedUser ───────────────────────────────────────────
 
     @Test
     void getCurrentAuthenticatedUser_whenAuthenticated_shouldReturnUser() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(owner);
 
         User result = postSecurityService.getCurrentAuthenticatedUser();
 
@@ -82,7 +72,8 @@ class PostSecurityServiceTest {
 
     @Test
     void getCurrentAuthenticatedUser_whenNotAuthenticated_shouldThrowAccessDeniedException() {
-        SecurityContextHolder.clearContext();
+        when(authorizationService.getCurrentAuthenticatedUser())
+                .thenThrow(new AccessDeniedException("Authentication required"));
 
         assertThatThrownBy(() -> postSecurityService.getCurrentAuthenticatedUser())
                 .isInstanceOf(AccessDeniedException.class)
@@ -91,8 +82,8 @@ class PostSecurityServiceTest {
 
     @Test
     void getCurrentAuthenticatedUser_whenUserNotInDb_shouldThrowRuntimeException() {
-        authenticateAs("ghost@example.com");
-        when(userService.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+        when(authorizationService.getCurrentAuthenticatedUser())
+                .thenThrow(new RuntimeException("Authenticated user not found"));
 
         assertThatThrownBy(() -> postSecurityService.getCurrentAuthenticatedUser())
                 .isInstanceOf(RuntimeException.class)
@@ -141,8 +132,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canUpdatePost_whenCurrentUserIsOwner_shouldReturnTrue() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(owner);
         when(postRepository.findById(10L)).thenReturn(Optional.of(post));
 
         assertThat(postSecurityService.canUpdatePost(10L)).isTrue();
@@ -150,8 +140,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canUpdatePost_whenCurrentUserIsNotOwner_shouldReturnFalse() {
-        authenticateAs("other@example.com");
-        when(userService.findByEmail("other@example.com")).thenReturn(Optional.of(otherUser));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(otherUser);
         when(postRepository.findById(10L)).thenReturn(Optional.of(post));
 
         assertThat(postSecurityService.canUpdatePost(10L)).isFalse();
@@ -159,8 +148,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canUpdatePost_whenPostNotFound_shouldReturnFalse() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(owner);
         when(postRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThat(postSecurityService.canUpdatePost(99L)).isFalse();
@@ -168,8 +156,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canUpdatePost_whenExceptionThrown_shouldReturnFalse() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenThrow(new RuntimeException("DB error"));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenThrow(new RuntimeException("DB error"));
 
         assertThat(postSecurityService.canUpdatePost(10L)).isFalse();
     }
@@ -178,8 +165,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canDeletePost_whenCurrentUserIsOwner_shouldReturnTrue() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(owner);
         when(postRepository.findById(10L)).thenReturn(Optional.of(post));
 
         assertThat(postSecurityService.canDeletePost(10L)).isTrue();
@@ -187,8 +173,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canDeletePost_whenCurrentUserIsNotOwner_shouldReturnFalse() {
-        authenticateAs("other@example.com");
-        when(userService.findByEmail("other@example.com")).thenReturn(Optional.of(otherUser));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(otherUser);
         when(postRepository.findById(10L)).thenReturn(Optional.of(post));
 
         assertThat(postSecurityService.canDeletePost(10L)).isFalse();
@@ -196,8 +181,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canDeletePost_whenPostNotFound_shouldReturnFalse() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(owner);
         when(postRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThat(postSecurityService.canDeletePost(99L)).isFalse();
@@ -205,8 +189,7 @@ class PostSecurityServiceTest {
 
     @Test
     void canDeletePost_whenExceptionThrown_shouldReturnFalse() {
-        authenticateAs("owner@example.com");
-        when(userService.findByEmail("owner@example.com")).thenThrow(new RuntimeException("DB error"));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenThrow(new RuntimeException("DB error"));
 
         assertThat(postSecurityService.canDeletePost(10L)).isFalse();
     }

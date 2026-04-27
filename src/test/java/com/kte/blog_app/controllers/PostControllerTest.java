@@ -317,7 +317,7 @@ class PostControllerTest {
         PostStatus category = PostStatus.PUBLISHED;
         List<PostResponse> expectedPosts = createExpectedPostsForAuthorAndCategory(johnDoeAuthorResponse, category);
 
-        when(userService.getUserId(defaultAuthorId)).thenReturn(mockAuthor);
+        when(userService.getUserById(defaultAuthorId)).thenReturn(mockAuthor);
         when(postService.getAllPostByAuthorAndCategory(mockAuthor, category)).thenReturn(expectedPosts);
 
         // When & Then
@@ -338,7 +338,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$[1].category").value("PUBLISHED"))
                 .andExpect(jsonPath("$[1].author.name").value("John Doe"));
 
-        verify(userService, times(1)).getUserId(defaultAuthorId);
+        verify(userService, times(1)).getUserById(defaultAuthorId);
         verify(postService, times(1)).getAllPostByAuthorAndCategory(mockAuthor, category);
     }
 
@@ -353,7 +353,7 @@ class PostControllerTest {
                 .andExpect(status().isInternalServerError());
 
         verify(postService, never()).getAllPostByCategory(any());
-        verify(userService, never()).getUserId(any());
+        verify(userService, never()).getUserById(any());
     }
 
     // --- PUT ---

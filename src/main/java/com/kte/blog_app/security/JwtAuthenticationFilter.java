@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = extractToken(request);
 
             if (token != null) {
+
                 UserDetails userDetails = authenticationService.validateToken(token);
 
                 UsernamePasswordAuthenticationToken authentication =
@@ -41,14 +42,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // Add userId to request attributes for controller access
                 if (userDetails instanceof BlogUserDetails blogUserDetails) {
                     request.setAttribute("userId", blogUserDetails.getId());
                 }
             }
         } catch (Exception e) {
-            // Don't throw exceptions here - just don't authenticate the request
-            log.warn("Received invalid auth token");
+            // Invalid or expired token: allow the request to pass without authentication.
+            log.warn("Could not authenticate request: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

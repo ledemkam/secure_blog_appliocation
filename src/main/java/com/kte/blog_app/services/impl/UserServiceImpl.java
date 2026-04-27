@@ -12,8 +12,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,17 +22,18 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
+
+    private static final String USER_NOT_FOUND_MESSAGE = "User not found with id: ";
+
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final AuthorizationService authorizationService;
 
-    String userNotFoundMessage = "user not found with id: ";
-
     @Override
-    public User getUserId(Long id) {
+    public User getUserById(Long id) {
         log.debug("Getting user by id: {}", id);
         return userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(userNotFoundMessage + id));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
     }
 
     @Override
@@ -53,23 +52,18 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public User updateUser(Long id, UpdateUserRequest updateUserRequest) {
-        // ✅ Retrieve user directly without PostSecurityService
-        User currentUser = getCurrentAuthenticatedUser();
+        User currentUser = authorizationService.getCurrentAuthenticatedUser();
         log.info("User {} attempting to update user with id: {}", currentUser.getId(), id);
 
-        // check permit via AuthorizationService
         if (!authorizationService.canAccessResource(currentUser.getId(), id)) {
             throw new AccessDeniedException("You can only update your own profile");
         }
 
-        // Retrieve the user to modify
         User existingUser = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(userNotFoundMessage + id));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
 
-        // apply changes with mapper
         userMapper.updateEntity(updateUserRequest, existingUser);
 
-        // Save and return
         User updatedUser = userRepository.save(existingUser);
         log.info("Successfully updated user with id: {}", id);
 
@@ -80,36 +74,19 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @PreAuthorize("isAuthenticated()")
     public void deleteUser(Long id) {
-        // ✅ Retrieve user directly without PostSecurityService
-        User currentUser = getCurrentAuthenticatedUser();
+        User currentUser = authorizationService.getCurrentAuthenticatedUser();
         log.info("User {} attempting to delete user with id: {}", currentUser.getId(), id);
 
-        // check all permit via AuthorizationService
         if (!authorizationService.canAccessResource(currentUser.getId(), id)) {
             throw new AccessDeniedException("You can only delete your own account");
         }
 
-        // check exist user
         User userToDelete = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(userNotFoundMessage + id));
+                .orElseThrow(() -> new UserNotFoundException(USER_NOT_FOUND_MESSAGE + id));
 
-        // deleting
         userRepository.delete(userToDelete);
         log.info("Successfully deleted user with id: {}", id);
     }
 
-    /**
-     * ✅ Private method to retrieve the authenticated user without circular dependency
-     */
-    private User getCurrentAuthenticatedUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AccessDeniedException("Authentication required");
-        }
-
-        String email = authentication.getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
-    }
 }
+

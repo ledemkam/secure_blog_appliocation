@@ -78,7 +78,7 @@ class UserServiceImplTest {
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
 
         // When
-        User result = userService.getUserId(testUserId);
+        User result = userService.getUserById(testUserId);
 
         // Then
         assertThat(result).isNotNull();
@@ -100,9 +100,9 @@ class UserServiceImplTest {
         when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
 
         // When & Then
-        assertThatThrownBy(() -> userService.getUserId(nonExistentId))
+        assertThatThrownBy(() -> userService.getUserById(nonExistentId))
                 .isInstanceOf(UserNotFoundException.class)
-                .hasMessageContaining("user not found with id: " + nonExistentId);
+                .hasMessageContaining("User not found with id: " + nonExistentId);
 
         verify(userRepository, times(1)).findById(nonExistentId);
     }
@@ -175,8 +175,7 @@ class UserServiceImplTest {
                 .email("updated@example.com")
                 .build();
 
-        // ✅ Mock du repository pour findByEmail (utilisé par getCurrentAuthenticatedUser)
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser));
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(testUser);
         when(authorizationService.canAccessResource(testUserId, testUserId)).thenReturn(true);
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(userRepository.save(testUser)).thenReturn(testUser);
@@ -188,7 +187,7 @@ class UserServiceImplTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(testUserId);
 
-        verify(userRepository).findByEmail("test@example.com");
+        verify(authorizationService).getCurrentAuthenticatedUser();
         verify(authorizationService).canAccessResource(testUserId, testUserId);
         verify(userRepository).findById(testUserId);
         verify(userMapper).updateEntity(updateRequest, testUser);
@@ -197,10 +196,10 @@ class UserServiceImplTest {
 
     @Test
     @DisplayName("Should delete user successfully when authorized")
-    @WithMockUser(username = "test@example.com", roles = "USER")  // ✅ Ajouter cette annotation
+    @WithMockUser(username = "test@example.com", roles = "USER")
     void should_delete_user_when_authorized() {
         // Given
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(testUser)); // ✅ Ajouter ce mock
+        when(authorizationService.getCurrentAuthenticatedUser()).thenReturn(testUser);
         when(authorizationService.canAccessResource(testUserId, testUserId)).thenReturn(true);
         when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
 
@@ -208,7 +207,7 @@ class UserServiceImplTest {
         userService.deleteUser(testUserId);
 
         // Then
-        verify(userRepository).findByEmail("test@example.com"); // ✅ Vérifier l'appel correct
+        verify(authorizationService).getCurrentAuthenticatedUser();
         verify(authorizationService).canAccessResource(testUserId, testUserId);
         verify(userRepository).findById(testUserId);
         verify(userRepository).delete(testUser);

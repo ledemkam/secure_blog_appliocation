@@ -1,6 +1,7 @@
 package com.kte.blog_app.security;
 
 import com.kte.blog_app.domain.entities.User;
+import com.kte.blog_app.exceptions.UserNotFoundException;
 import com.kte.blog_app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -44,7 +45,7 @@ public class AuthorizationService {
 
         String email = authentication.getName();
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Authenticated user not found"));
+                .orElseThrow(() -> new UserNotFoundException("Authenticated user not found"));
     }
 
 }

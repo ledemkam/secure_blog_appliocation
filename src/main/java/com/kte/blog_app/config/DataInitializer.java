@@ -3,6 +3,7 @@ package com.kte.blog_app.config;
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Configuration
 @RequiredArgsConstructor
 public class DataInitializer {
@@ -28,8 +30,7 @@ public class DataInitializer {
                                 .createDate(LocalDateTime.now())
                                 .build();
                         userRepository.save(newUser);
-                        System.out.println("✅ Utilisateur test créé: " + email);
-                    }
+                        log.info("Utilisateur test créé: {}", email);                    }
             );
         };
     }

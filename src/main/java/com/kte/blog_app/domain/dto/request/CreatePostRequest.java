@@ -17,12 +17,10 @@ import lombok.Builder;
 public class CreatePostRequest {
 
     @NotBlank(message = "Title is required")
-    @Size(min = 3, max = 200, message = "Title must be between {min and {max characters")
-    private String title;
+    @Size(min = 3, max = 200, message = "Title must be between {min} and {max} characters")    private String title;
 
     @NotBlank(message = "Content is required")
-    @Size(min = 10, max = 50000, message = "Content must be between {min and {max characters")
-    private String content;
+    @Size(min = 10, max = 50000, message = "Content must be between {min} and {max} characters")    private String content;
 
     @NotNull(message = "category is required")
     private PostStatus category;

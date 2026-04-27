@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @Tag(name = "Post")
-public interface IpostController {
+public interface IPostController {
 
     @Operation(summary = "Create Post")
     @ApiResponses(value = {

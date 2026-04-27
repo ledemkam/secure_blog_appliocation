@@ -2,6 +2,7 @@ package com.kte.blog_app.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kte.blog_app.domain.dto.request.UpdateUserRequest;
+import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.mappers.UserMapper;
 import com.kte.blog_app.security.UserSecurityService;
@@ -57,12 +58,13 @@ class UserControllerTest {
     private UpdateUserRequest updateRequest;
     private Long existingUserId;
     private LocalDateTime baseDateTime;
+    private UserResponse mockUserResponse;
+    private UserResponse updatedUserResponse;
 
     @BeforeEach
     void setUp() {
-        baseDateTime = LocalDateTime.now();
         existingUserId = 1L;
-
+        LocalDateTime baseDateTime = LocalDateTime.now();
 
         mockUser = User.builder()
                 .id(existingUserId)
@@ -71,6 +73,14 @@ class UserControllerTest {
                 .password("encodedPassword")
                 .createDate(baseDateTime)
                 .posts(new ArrayList<>())
+                .build();
+
+        // ✅ Ajouter les réponses DTO
+        mockUserResponse = UserResponse.builder()
+                .id(existingUserId)
+                .name("Test User")
+                .email("test@test.com")
+                .createDate(baseDateTime)
                 .build();
 
         updateRequest = UpdateUserRequest.builder()
@@ -86,12 +96,20 @@ class UserControllerTest {
                 .createDate(baseDateTime)
                 .posts(new ArrayList<>())
                 .build();
+
+        // ✅ Ajouter la réponse DTO du user mis à jour
+        updatedUserResponse = UserResponse.builder()
+                .id(existingUserId)
+                .name("Updated Name")
+                .email("updated@test.com")
+                .createDate(baseDateTime)
+                .build();
     }
     @Test
     void should_return_200_when_user_exists() throws Exception {
         // Given
-        when(userService.getUserId(existingUserId)).thenReturn(mockUser);
-
+        when(userService.getUserById(existingUserId)).thenReturn(mockUser);
+        when(userMapper.toResponse(mockUser)).thenReturn(mockUserResponse);
         // When & Then
         mockMvc.perform(get(API_BASE_PATH + "/{id}", existingUserId)
                         .contentType(MediaType.APPLICATION_JSON))
@@ -100,14 +118,14 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.name").value("Test User"))
                 .andExpect(jsonPath("$.email").value("test@test.com"));
 
-        verify(userService, times(1)).getUserId(existingUserId);
+        verify(userService, times(1)).getUserById(existingUserId);
     }
 
     @Test
     void should_return_200_when_User_by_Email_exist() throws Exception {
         // Given
         when(userService.findByEmail(mockUser.getEmail())).thenReturn(Optional.of(mockUser));
-
+        when(userMapper.toResponse(mockUser)).thenReturn(mockUserResponse);
         // When & Then
         mockMvc.perform(get(API_BASE_PATH + "/email/{email}", mockUser.getEmail())
                         .contentType(MediaType.APPLICATION_JSON))
@@ -125,6 +143,7 @@ class UserControllerTest {
         // Given
         when(userSecurityService.canUpdateUser(existingUserId)).thenReturn(true);
         when(userService.updateUser(existingUserId, updateRequest)).thenReturn(updatedUser);
+        when(userMapper.toResponse(updatedUser)).thenReturn(updatedUserResponse);
 
         // When & Then
         mockMvc.perform(put(API_BASE_PATH + "/{id}", existingUserId)
