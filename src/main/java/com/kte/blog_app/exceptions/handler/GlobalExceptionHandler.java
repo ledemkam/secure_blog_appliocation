@@ -4,6 +4,7 @@ import com.kte.blog_app.domain.dto.ErrorDto;
 import com.kte.blog_app.exceptions.PostNotFoundException;
 import com.kte.blog_app.exceptions.UserAlreadyExistsException;
 import com.kte.blog_app.exceptions.UserNotFoundException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestControllerAdvice
@@ -61,13 +63,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND); // ← 400 → 404
     }
 
-        @ExceptionHandler(PostNotFoundException.class)
-        public ResponseEntity<ErrorDto> handlePostNotFoundException(PostNotFoundException ex) {
-            log.error("Caught PostNotFoundException", ex);
-            ErrorDto errorDto = new ErrorDto();
-            errorDto.setError("Post not found");
-            return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
-        }
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ErrorDto> handlePostNotFound(
+            PostNotFoundException ex,
+            HttpServletRequest request) {
+        ErrorDto error = new ErrorDto(
+                ex.getMessage(),
+                request.getRequestURI(),   // → path
+                404,                       // → status
+                LocalDateTime.now()        // → timestamp
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
 
 
 

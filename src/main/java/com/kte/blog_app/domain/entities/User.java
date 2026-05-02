@@ -16,7 +16,12 @@ import java.util.Objects;
 @Getter
 @Setter
 @Builder
-@Table(name = "users")
+@Table(
+        name = "users",
+        indexes = {
+                @Index(name = "idx_user_email", columnList = "email", unique = true)
+        }
+)
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

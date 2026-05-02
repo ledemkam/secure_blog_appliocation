@@ -8,12 +8,19 @@ import java.util.Objects;
 
 
 @Entity
-@Table(name = "posts")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+        name = "posts",
+        indexes = {
+                @Index(name = "idx_post_category",            columnList = "category"),
+                @Index(name = "idx_post_author_id",           columnList = "author_id"),
+                @Index(name = "idx_post_author_id_category",  columnList = "author_id, category")
+        }
+)
 public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

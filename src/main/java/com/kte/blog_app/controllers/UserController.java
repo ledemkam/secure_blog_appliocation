@@ -6,7 +6,7 @@ import com.kte.blog_app.domain.dto.response.UserResponse;
 import com.kte.blog_app.domain.entities.User;
 import com.kte.blog_app.exceptions.UserNotFoundException;
 import com.kte.blog_app.mappers.UserMapper;
-import com.kte.blog_app.security.UserSecurityService;
+
 import com.kte.blog_app.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ import java.util.Optional;
 public class UserController implements IUserController {
 
     private final UserService userService;
-    private final UserSecurityService userSecurityService;
+
 
     private final UserMapper userMapper;
 

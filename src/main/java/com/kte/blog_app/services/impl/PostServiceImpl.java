@@ -11,7 +11,7 @@ import com.kte.blog_app.mappers.PostMapper;
 import com.kte.blog_app.repositories.PostRepository;
 import com.kte.blog_app.security.PostSecurityService;
 import com.kte.blog_app.services.PostService;
-import com.kte.blog_app.services.UserService;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final PostSecurityService postSecurityService;
-    private final UserService userService;
+
 
     @Transactional
     @Override

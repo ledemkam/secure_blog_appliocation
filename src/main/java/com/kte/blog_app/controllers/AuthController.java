@@ -6,7 +6,7 @@ import com.kte.blog_app.domain.dto.response.AuthResponse;
 import com.kte.blog_app.services.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,13 +17,12 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(path = "/api/v1/auth")
 public class AuthController {
 
-    private static final long MILLISECONDS_PER_SECOND = 1000L;
+
 
     private final AuthenticationService authenticationService;
 
 
-    @Value("${jwt.expiration:86400000}")
-    private long jwtExpirationMs;
+
 
     @PostMapping(path = "/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
@@ -35,7 +34,7 @@ public class AuthController {
 
         AuthResponse authResponse = AuthResponse.builder()
                 .token(authenticationService.generateToken(user))
-                .expiresIn(jwtExpirationMs / MILLISECONDS_PER_SECOND)
+                .expiresIn(authenticationService.getExpirationInSeconds())
                 .build();
 
         return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
@@ -50,7 +49,7 @@ public class AuthController {
 
         AuthResponse authResponse = AuthResponse.builder()
                 .token(authenticationService.generateToken(user))
-                .expiresIn(jwtExpirationMs / MILLISECONDS_PER_SECOND)
+                .expiresIn(authenticationService.getExpirationInSeconds())
                 .build();
 
         return ResponseEntity.ok(authResponse);

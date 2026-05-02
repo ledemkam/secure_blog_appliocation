@@ -7,4 +7,5 @@ public interface AuthenticationService {
     String generateToken(UserDetails userDetails);
     UserDetails validateToken(String token);
     UserDetails register(String name, String email, String password);
+    long getExpirationInSeconds();
 }

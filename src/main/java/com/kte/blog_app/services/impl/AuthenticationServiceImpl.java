@@ -6,6 +6,7 @@ import com.kte.blog_app.repositories.UserRepository;
 import com.kte.blog_app.security.BlogUserDetails;
 import com.kte.blog_app.services.AuthenticationService;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -65,6 +66,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
+    public long getExpirationInSeconds() {
+        return jwtExpirationMs / 1000L;
+    }
+
+    @Override
     public UserDetails validateToken(String token) {
         //  Parse claims once — avoid double-parsing JWTs.
         Claims claims = extractClaims(token);
@@ -106,8 +112,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid JWT token");
+        }catch (JwtException e)        {
+            throw new BadCredentialsException("Invalid JWT token");
         }
     }
 
